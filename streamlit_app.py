@@ -1,8 +1,8 @@
 """
 Streamlit Web Dashboard for Real vs. AI-Generated Image Classification.
-Crafted strictly according to the Apple Design System (DESIGN.md) & Aceternity UI Component Architecture.
-Featuring SF Pro Typography (-0.28px tracking), Action Blue (#0066cc) Pill CTAs,
-Aceternity Card Spotlight & Bento Grid, Frosted Vibrancy, and the Signature Product Resting Shadow.
+Engineered strictly according to the Lamborghini Design System (DESIGN.md) & Aceternity UI Component Architecture.
+Featuring Absolute Black (#006600), Lamborghini Gold (#FFC000), 0px Razor-Sharp Geometry,
+All-Caps Display Typography, Cockpit Telemetry Bento Grid, and Aceternity Spotlight Dynamics.
 Zero AI Slop. 100% Functionality Preserved.
 """
 
@@ -31,43 +31,50 @@ from src.frequency_analysis import compute_fft_spectrum, extract_artifact_featur
 
 # Streamlit Page Configuration
 st.set_page_config(
-    page_title="AI vs. Real Image Classifier | Apple Design & CIFAKE ResNet-50",
-    page_icon="🔍",
+    page_title="CIFAKE // LAMBORGHINI FORENSICS SUITE",
+    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Apple Design System + Aceternity UI Component Architecture (DESIGN.md Specification)
+# Lamborghini Design System + Aceternity UI Component Styling (DESIGN.md Reference)
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
-    /* Apple System Font Stack */
+    /* Global Lamborghini Typography & Reset */
     html, body, [class*="css"] {
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", system-ui, sans-serif !important;
+        font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif !important;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
     }
 
-    /* Apple Canvas: Parchment (#f5f5f7) and Pure White (#ffffff) */
+    /* Absolute Black (#000000) Canvas */
     .stApp {
-        background-color: #f5f5f7 !important;
-        color: #1d1d1f !important;
+        background-color: #000000 !important;
+        color: #FFFFFF !important;
     }
 
-    /* Apple Ambient Lighting / Subtle Beam (Aceternity Ambient Glow) */
-    .apple-ambient-glow {
-        position: relative;
-        overflow: hidden;
+    /* Aceternity Spotlight Effect */
+    .lambo-spotlight {
+        position: absolute;
+        top: -160px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 850px;
+        height: 380px;
+        background: radial-gradient(ellipse at 50% 0%, rgba(255, 192, 0, 0.12) 0%, rgba(41, 171, 226, 0.05) 35%, rgba(0, 0, 0, 0) 75%);
+        pointer-events: none;
+        z-index: 0;
     }
 
-    /* Apple Frosted Floating Sub-Nav Strip (DESIGN.md {component.sub-nav-frosted}) */
-    .apple-sub-nav {
-        background: rgba(255, 255, 255, 0.8) !important;
-        backdrop-filter: saturate(180%) blur(20px) !important;
-        -webkit-backdrop-filter: saturate(180%) blur(20px) !important;
-        border-bottom: 1px solid #e0e0e0;
-        padding: 10px 24px;
+    /* Lamborghini Cockpit Sub-Nav Bar */
+    .lambo-sub-nav {
+        background: rgba(12, 12, 12, 0.95) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        border-bottom: 1px solid #202020;
+        padding: 12px 28px;
         margin: -4rem -4rem 2rem -4rem;
         display: flex;
         align-items: center;
@@ -77,62 +84,70 @@ st.markdown("""
         z-index: 99;
     }
 
-    .apple-sub-nav-left {
+    .lambo-sub-nav-left {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 14px;
     }
 
-    .apple-sub-nav-title {
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-        font-size: 17px;
-        font-weight: 600;
-        color: #1d1d1f;
-        letter-spacing: -0.25px;
-    }
-
-    .apple-sub-nav-chip {
-        font-size: 12px;
-        color: #7a7a7a;
-        background: #f0f0f2;
-        padding: 3px 10px;
-        border-radius: 9999px;
-        font-weight: 500;
-    }
-
-    .apple-sub-nav-right {
+    .lambo-sub-nav-brand {
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: #FFFFFF;
         display: flex;
         align-items: center;
         gap: 8px;
     }
 
-    .apple-sub-nav-status {
+    .lambo-sub-nav-brand span {
+        color: #FFC000;
+    }
+
+    .lambo-sub-nav-chip {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #7D7D7D;
+        background: #181818;
+        border: 1px solid #282828;
+        padding: 4px 10px;
+    }
+
+    .lambo-sub-nav-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .lambo-telemetry-badge {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #FFC000;
+        background: rgba(255, 192, 0, 0.08);
+        border: 1px solid rgba(255, 192, 0, 0.25);
+        padding: 5px 14px;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        font-size: 12px;
-        font-weight: 500;
-        color: #0066cc;
-        background: rgba(0, 102, 204, 0.08);
-        padding: 4px 12px;
-        border-radius: 9999px;
+        gap: 8px;
     }
 
-    .apple-status-dot {
+    .lambo-status-dot {
         width: 6px;
         height: 6px;
-        border-radius: 50%;
-        background-color: #34c759;
+        background-color: #FFC000;
+        box-shadow: 0 0 8px #FFC000;
         display: inline-block;
-        box-shadow: 0 0 6px rgba(52, 199, 89, 0.6);
     }
 
-    /* Apple Frosted Sidebar (macOS System Navigation) */
+    /* Lamborghini Dark Iron Sidebar */
     [data-testid="stSidebar"] {
-        background: rgba(255, 255, 255, 0.88) !important;
-        backdrop-filter: saturate(180%) blur(20px) !important;
-        -webkit-backdrop-filter: saturate(180%) blur(20px) !important;
-        border-right: 1px solid #e0e0e0 !important;
+        background-color: #080808 !important;
+        border-right: 1px solid #1c1c1c !important;
     }
 
     [data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] {
@@ -141,320 +156,370 @@ st.markdown("""
         background: transparent;
         padding: 0;
         border: none;
-        gap: 4px;
+        gap: 3px;
         width: 100%;
     }
 
     [data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label {
-        border-radius: 10px !important;
-        padding: 10px 14px !important;
+        border-radius: 0px !important;
+        padding: 12px 14px !important;
         width: 100% !important;
         margin: 0 !important;
         display: flex !important;
         align-items: center !important;
-        transition: background-color 0.15s ease, color 0.15s ease !important;
+        transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease !important;
         border: none !important;
+        border-left: 3px solid transparent !important;
         cursor: pointer !important;
+        background: transparent !important;
     }
 
     [data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label:hover {
-        background: rgba(0, 0, 0, 0.04) !important;
+        background: #141414 !important;
+        border-left-color: #555555 !important;
     }
 
     [data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) {
-        background: #0066cc !important;
-        color: #ffffff !important;
-        box-shadow: 0 2px 8px rgba(0, 102, 204, 0.25) !important;
+        background: #181818 !important;
+        border-left: 3px solid #FFC000 !important;
     }
 
     [data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) p,
     [data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) span {
-        color: #ffffff !important;
-        font-weight: 600 !important;
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.08em !important;
+        text-transform: uppercase !important;
     }
 
     [data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label > div:first-child {
         display: none !important;
     }
 
-    /* Apple Top Bar Badge */
-    .apple-badge {
+    /* All-Caps Section Header & Badges */
+    .lambo-badge {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         padding: 5px 12px;
-        border-radius: 9999px;
-        background: #ffffff;
-        border: 1px solid #e0e0e0;
-        color: #0066cc;
-        font-size: 12px;
-        font-weight: 600;
-        letter-spacing: -0.12px;
+        border-radius: 0px;
+        background: #181818;
+        border-left: 3px solid #FFC000;
+        border-top: 1px solid #282828;
+        border-right: 1px solid #282828;
+        border-bottom: 1px solid #282828;
+        color: #FFC000;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
         margin-bottom: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
 
-    /* Apple Display Typography with Signature Negative Tracking */
-    .apple-hero-title {
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-        font-size: 46px;
-        font-weight: 600;
-        line-height: 1.08;
-        letter-spacing: -0.28px;
-        color: #1d1d1f;
+    .lambo-hero-title {
+        font-size: 48px;
+        font-weight: 900;
+        line-height: 0.95;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: #FFFFFF;
         margin-bottom: 8px;
     }
 
-    .apple-hero-subtitle {
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-        font-size: 20px;
+    .lambo-hero-subtitle {
+        font-size: 15px;
         font-weight: 400;
-        line-height: 1.4;
-        letter-spacing: -0.2px;
-        color: #7a7a7a;
+        line-height: 1.45;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #7D7D7D;
         margin-bottom: 28px;
     }
 
-    /* Aceternity Card Spotlight & Apple Store Utility Card ({rounded.lg} = 18px) */
-    .apple-card {
-        background: #ffffff;
-        border: 1px solid #e0e0e0;
-        border-radius: 18px;
+    /* Aceternity Card Spotlight & Charcoal (#202020) Container (0px Radius) */
+    .lambo-card {
+        background: #141414;
+        border: 1px solid #222222;
+        border-radius: 0px;
         padding: 24px;
         margin-bottom: 20px;
-        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
         position: relative;
-        overflow: hidden;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .apple-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.08);
-        border-color: #d2d2d7;
+    .lambo-card:hover {
+        border-color: #383838;
+        box-shadow: 0 0 24px rgba(255, 192, 0, 0.04);
     }
 
-    .apple-card-title {
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-        font-size: 20px;
-        font-weight: 600;
-        color: #1d1d1f;
-        letter-spacing: -0.2px;
+    .lambo-card-title {
+        font-size: 18px;
+        font-weight: 800;
+        color: #FFFFFF;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
         margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
-    /* Signature Apple Product Drop-Shadow (DESIGN.md specification) */
+    .lambo-card-title::before {
+        content: "";
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: #FFC000;
+    }
+
+    /* Razor-Sharp Image Display (0px Radius) */
     [data-testid="stImage"] img {
-        border-radius: 14px !important;
-        box-shadow: rgba(0, 0, 0, 0.16) 0px 8px 28px 0px !important;
-        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+        border-radius: 0px !important;
+        border: 1px solid #282828 !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8) !important;
+        transition: border-color 0.2s ease !important;
     }
 
     [data-testid="stImage"] img:hover {
-        box-shadow: rgba(0, 0, 0, 0.22) 0px 12px 36px 0px !important;
-        transform: translateY(-2px) !important;
+        border-color: #FFC000 !important;
     }
 
-    /* Apple Segmented Pill Control for Main Radios */
+    /* Angular Source Selector Controls */
     div[data-testid="stMain"] div[data-testid="stRadio"] > div[role="radiogroup"] {
         display: flex;
         gap: 6px;
-        background: #e5e5ea;
+        background: #141414;
         padding: 4px;
-        border-radius: 9999px;
-        border: 1px solid rgba(0, 0, 0, 0.04);
+        border-radius: 0px;
+        border: 1px solid #282828;
         width: fit-content;
-        margin-bottom: 12px;
+        margin-bottom: 16px;
     }
 
     div[data-testid="stMain"] div[data-testid="stRadio"] > div[role="radiogroup"] > label {
         display: inline-flex;
         align-items: center;
         background: transparent;
-        border-radius: 9999px;
-        padding: 6px 16px;
+        border-radius: 0px;
+        padding: 8px 18px;
         margin: 0 !important;
         cursor: pointer;
-        font-size: 13px !important;
-        font-weight: 500 !important;
-        color: #7a7a7a !important;
-        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.1em !important;
+        text-transform: uppercase !important;
+        color: #7D7D7D !important;
+        transition: all 0.15s ease;
         border: none !important;
     }
 
     div[data-testid="stMain"] div[data-testid="stRadio"] > div[role="radiogroup"] > label:hover {
-        color: #1d1d1f !important;
+        color: #FFFFFF !important;
     }
 
     div[data-testid="stMain"] div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) {
-        background: #ffffff !important;
-        color: #1d1d1f !important;
-        font-weight: 600 !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+        background: #FFC000 !important;
+        color: #000000 !important;
+        font-weight: 900 !important;
     }
 
     div[data-testid="stMain"] div[data-testid="stRadio"] > div[role="radiogroup"] > label > div:first-child {
         display: none !important;
     }
 
-    /* Apple iCloud / AirDrop Style File Uploader */
+    /* High-Performance File Intake Bay */
     div[data-testid="stFileUploader"] {
-        border-radius: 18px;
+        border-radius: 0px;
     }
     div[data-testid="stFileUploader"] section {
-        border: 1.5px dashed #d2d2d7 !important;
-        border-radius: 18px !important;
-        background-color: #fafafc !important;
+        border: 1px dashed #383838 !important;
+        border-radius: 0px !important;
+        background-color: #0f0f0f !important;
         padding: 24px !important;
-        transition: all 0.2s ease !important;
+        transition: border-color 0.2s ease, background-color 0.2s ease !important;
     }
     div[data-testid="stFileUploader"] section:hover {
-        border-color: #0066cc !important;
-        background-color: #ffffff !important;
+        border-color: #FFC000 !important;
+        background-color: #141414 !important;
     }
 
-    /* Apple Verdict Banner - Authentic */
-    .apple-verdict-real {
-        background: #fafafc;
-        border: 1.5px solid #10b981;
-        border-radius: 18px;
+    /* Lamborghini Verdict - Authentic Photographic Media */
+    .lambo-verdict-real {
+        background: #0d1610;
+        border: 1px solid #10b981;
+        border-left: 6px solid #10b981;
+        border-radius: 0px;
         padding: 22px;
-        text-align: center;
+        text-align: left;
         margin: 16px 0;
-        box-shadow: 0 4px 20px -2px rgba(16, 185, 129, 0.10);
+        box-shadow: 0 4px 24px rgba(16, 185, 129, 0.12);
     }
 
-    /* Apple Verdict Banner - AI */
-    .apple-verdict-ai {
-        background: #fafafc;
-        border: 1.5px solid #f43f5e;
-        border-radius: 18px;
+    /* Lamborghini Verdict - Synthetic AI Generation */
+    .lambo-verdict-ai {
+        background: #180d0f;
+        border: 1px solid #f43f5e;
+        border-left: 6px solid #f43f5e;
+        border-radius: 0px;
         padding: 22px;
-        text-align: center;
+        text-align: left;
         margin: 16px 0;
-        box-shadow: 0 4px 20px -2px rgba(244, 63, 94, 0.10);
+        box-shadow: 0 4px 24px rgba(244, 63, 94, 0.12);
     }
 
-    .apple-verdict-tag {
-        font-size: 12px;
-        font-weight: 600;
-        letter-spacing: 0.05em;
+    .lambo-verdict-tag {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
     }
-    .tag-real { color: #059669; }
-    .tag-ai { color: #e11d48; }
+    .tag-real { color: #10b981; }
+    .tag-ai { color: #f43f5e; }
 
-    .apple-verdict-headline {
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    .lambo-verdict-headline {
         font-size: 32px;
-        font-weight: 600;
-        letter-spacing: -0.37px;
-        line-height: 1.15;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        line-height: 1.1;
+        text-transform: uppercase;
         margin: 4px 0 8px 0;
     }
-    .headline-real { color: #065f46; }
-    .headline-ai { color: #9f1239; }
+    .headline-real { color: #FFFFFF; }
+    .headline-ai { color: #FFFFFF; }
 
-    .apple-verdict-sub {
-        font-size: 14px;
-        color: #7a7a7a;
+    .lambo-verdict-sub {
+        font-size: 13px;
+        font-weight: 500;
+        color: #7D7D7D;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
     }
-    .apple-verdict-sub b {
-        color: #1d1d1f;
-        font-weight: 600;
+    .lambo-verdict-sub b {
+        color: #FFFFFF;
+        font-weight: 700;
     }
 
-    /* Aceternity Bento Grid - Apple Telemetry Tiles */
+    /* Aceternity Bento Grid - Cockpit Instrument Cluster */
     .bento-tile {
-        background: #f5f5f7;
-        border: 1px solid #e0e0e0;
-        border-radius: 14px;
-        padding: 16px 12px;
-        text-align: center;
-        transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+        background: #121212;
+        border: 1px solid #222222;
+        border-radius: 0px;
+        padding: 16px 14px;
+        text-align: left;
+        position: relative;
+        transition: border-color 0.15s ease, background 0.15s ease;
     }
     .bento-tile:hover {
-        background: #ffffff;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
-        border-color: #d2d2d7;
+        background: #181818;
+        border-color: #FFC000;
     }
 
     .bento-tile-value {
-        font-family: 'JetBrains Mono', -apple-system, monospace;
-        font-size: 20px;
-        font-weight: 600;
-        color: #1d1d1f;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 22px;
+        font-weight: 700;
+        color: #FFFFFF;
+        letter-spacing: -0.02em;
     }
 
     .bento-tile-label {
-        font-size: 12px;
-        font-weight: 500;
-        color: #7a7a7a;
-        letter-spacing: -0.12px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #7D7D7D;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
         margin-top: 4px;
     }
 
     .bento-tile-chip {
         display: inline-block;
         font-size: 10px;
-        font-weight: 600;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
         padding: 2px 8px;
-        border-radius: 9999px;
-        margin-top: 6px;
-        background: #ffffff;
-        border: 1px solid #e0e0e0;
-        color: #0066cc;
+        border-radius: 0px;
+        margin-top: 8px;
+        background: #1f1f1f;
+        border: 1px solid #333333;
+        color: #FFC000;
     }
 
-    /* Apple Diagnostic Note */
-    .apple-diagnostic-note {
-        background: #f5f5f7;
-        border-left: 3px solid #0066cc;
-        border-radius: 0 12px 12px 0;
+    /* Lamborghini Diagnostic Callout */
+    .lambo-diagnostic-note {
+        background: #121212;
+        border-left: 3px solid #FFC000;
+        border-radius: 0px;
         padding: 14px 18px;
-        font-size: 14px;
-        color: #333333;
+        font-size: 13px;
+        color: #F5F5F5;
         line-height: 1.5;
         margin: 16px 0;
+        letter-spacing: 0.02em;
     }
 
-    /* Action Blue (#0066cc) Primary Pill Buttons with 0.95 scale micro-interaction */
+    /* Lamborghini Gold Accent Primary CTA (#FFC000) & Transparent Ghost Buttons */
     button, .stDownloadButton > button {
-        background-color: #0066cc !important;
-        color: #ffffff !important;
-        border-radius: 9999px !important;
+        background-color: #FFC000 !important;
+        color: #000000 !important;
+        border-radius: 0px !important;
         border: none !important;
-        padding: 10px 22px !important;
-        font-size: 15px !important;
-        font-weight: 400 !important;
-        letter-spacing: -0.2px !important;
-        transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease !important;
-        box-shadow: 0 1px 3px rgba(0, 102, 204, 0.2) !important;
+        padding: 12px 26px !important;
+        font-size: 14px !important;
+        font-weight: 900 !important;
+        letter-spacing: 0.12em !important;
+        text-transform: uppercase !important;
+        transition: background-color 0.15s ease, color 0.15s ease !important;
+        box-shadow: 0 4px 16px rgba(255, 192, 0, 0.2) !important;
     }
 
     button:hover, .stDownloadButton > button:hover {
-        background-color: #0071e3 !important;
-        box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3) !important;
+        background-color: #917300 !important;
+        color: #FFFFFF !important;
+        box-shadow: 0 4px 20px rgba(145, 115, 0, 0.35) !important;
     }
 
     button:active, .stDownloadButton > button:active {
-        transform: scale(0.95) !important;
+        background-color: #735b00 !important;
     }
 
-    /* Slider Action Blue */
+    /* Slider & Progress Gauge Styling */
     .stSlider > div > div > div > div {
-        background-color: #0066cc !important;
+        background-color: #FFC000 !important;
     }
     .stProgress > div > div > div > div {
-        background-color: #0066cc !important;
+        background-color: #FFC000 !important;
     }
 
-    /* Clean Apple Data Tables */
+    /* Streamlit Metric Customization */
+    div[data-testid="stMetricValue"] {
+        font-family: 'JetBrains Mono', monospace !important;
+        font-size: 26px !important;
+        font-weight: 700 !important;
+        color: #FFFFFF !important;
+    }
+
+    div[data-testid="stMetricLabel"] p {
+        font-size: 11px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.12em !important;
+        text-transform: uppercase !important;
+        color: #7D7D7D !important;
+    }
+
+    /* Dark Iron Data Tables */
     [data-testid="stTable"], [data-testid="stDataFrame"] {
-        border-radius: 14px !important;
-        overflow: hidden !important;
-        border: 1px solid #e0e0e0 !important;
+        border-radius: 0px !important;
+        border: 1px solid #282828 !important;
+        background: #101010 !important;
+    }
+
+    /* Input Fields */
+    .stSelectbox div[data-baseweb="select"] {
+        border-radius: 0px !important;
+        background-color: #141414 !important;
+        border-color: #282828 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -481,16 +546,17 @@ def load_metrics_data():
 
 
 def render_sub_nav():
-    """Render Apple-inspired persistent frosted sub-nav bar."""
+    """Render Lamborghini-inspired floating cockpit sub-nav bar."""
     st.markdown("""
-    <div class="apple-sub-nav">
-        <div class="apple-sub-nav-left">
-            <span class="apple-sub-nav-title">CIFAKE Intelligence</span>
-            <span class="apple-sub-nav-chip">ResNet-50 · 2D FFT Forensics</span>
+    <div class="lambo-sub-nav">
+        <div class="lambo-sub-nav-left">
+            <span class="lambo-sub-nav-brand">CIFAKE <span>//</span> CORSE CLIENTE</span>
+            <span class="lambo-sub-nav-chip">RESNET-50 TRANSFER LEARNING</span>
+            <span class="lambo-sub-nav-chip">2D FOURIER MTF</span>
         </div>
-        <div class="apple-sub-nav-right">
-            <span class="apple-sub-nav-status">
-                <span class="apple-status-dot"></span> 92.28% Verified Accuracy
+        <div class="lambo-sub-nav-right">
+            <span class="lambo-telemetry-badge">
+                <span class="lambo-status-dot"></span> 92.28% VERIFIED ACCURACY
             </span>
         </div>
     </div>
@@ -498,15 +564,16 @@ def render_sub_nav():
 
 
 def render_sidebar():
-    """Render macOS-inspired clean sidebar navigation and precision controls."""
+    """Render Lamborghini cockpit sidebar navigation and calibration controls."""
     st.sidebar.markdown("""
-    <div style="background: #ffffff; border: 1px solid #e0e0e0; padding: 12px 14px; border-radius: 12px; text-align: center; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.03);">
-        <span style="font-size: 13px; font-weight: 600; color: #1d1d1f; letter-spacing: -0.2px;">ResNet-50 Transfer Learning</span><br>
-        <span style="font-size: 12px; color: #0066cc; font-weight: 500;">92.28% Benchmark Accuracy</span>
+    <div style="background: #121212; border: 1px solid #252525; padding: 16px; border-radius: 0px; text-align: left; margin-bottom: 24px;">
+        <span style="font-size: 11px; font-weight: 800; color: #7D7D7D; letter-spacing: 0.15em; text-transform: uppercase;">PROPULSION ENGINE</span><br>
+        <span style="font-size: 16px; font-weight: 900; color: #FFFFFF; letter-spacing: 0.05em; text-transform: uppercase;">RESNET-50 ARCHITECTURE</span><br>
+        <span style="font-size: 12px; color: #FFC000; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">BENCHMARK ACCURACY: 92.28%</span>
     </div>
     """, unsafe_allow_html=True)
 
-    st.sidebar.markdown('<p style="font-size: 11px; font-weight: 600; color: #7a7a7a; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">WORKSPACE</p>', unsafe_allow_html=True)
+    st.sidebar.markdown('<p style="font-size: 11px; font-weight: 800; color: #7D7D7D; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 8px;">TELEMETRY MODULES</p>', unsafe_allow_html=True)
     page = st.sidebar.radio(
         "Navigation",
         ["Image Detector", "Frequency Studio", "Model Benchmarks", "Batch Evaluation", "About CIFAKE"],
@@ -515,37 +582,39 @@ def render_sidebar():
     )
 
     st.sidebar.markdown("---")
-    st.sidebar.markdown('<p style="font-size: 11px; font-weight: 600; color: #7a7a7a; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">CALIBRATION</p>', unsafe_allow_html=True)
+    st.sidebar.markdown('<p style="font-size: 11px; font-weight: 800; color: #7D7D7D; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 8px;">CALIBRATION THRESHOLD</p>', unsafe_allow_html=True)
     threshold = st.sidebar.slider(
         "Decision Threshold",
         min_value=0.1,
         max_value=0.9,
         value=0.5,
         step=0.05,
-        help="Decision boundary for authentic classification (default: 0.50). Values >= threshold are classified as Real."
+        help="Binary decision boundary for authentic classification (default: 0.50). Values >= threshold are classified as Real."
     )
     show_fft = st.sidebar.checkbox("Compute 2D Fourier Spectrum", value=True)
 
     st.sidebar.markdown("---")
     st.sidebar.markdown("""
-    <div style="font-size: 12px; color: #7a7a7a; line-height: 1.5; padding: 6px 2px;">
-        <b style="color: #1d1d1f;">Design System:</b> Apple Design Reference (DESIGN.md)<br>
-        <b style="color: #1d1d1f;">Components:</b> Aceternity Bento & Spotlight<br>
-        <b style="color: #1d1d1f;">Typography:</b> SF Pro Display / SF Pro Text<br>
-        <b style="color: #1d1d1f;">Color Accent:</b> Action Blue (#0066cc)
+    <div style="font-size: 11px; color: #7D7D7D; line-height: 1.6; padding: 6px 2px; text-transform: uppercase; letter-spacing: 0.08em;">
+        <b style="color: #FFFFFF;">DESIGN SYSTEM:</b> LAMBORGHINI (DESIGN.MD)<br>
+        <b style="color: #FFFFFF;">ACCENT:</b> LAMBORGHINI GOLD (#FFC000)<br>
+        <b style="color: #FFFFFF;">GEOMETRY:</b> 0PX RAZOR-SHARP RECTANGLES<br>
+        <b style="color: #FFFFFF;">COMPONENTS:</b> ACETERNITY BENTO & SPOTLIGHT
     </div>
     """, unsafe_allow_html=True)
     return page, threshold, show_fft
 
 
 def page_detector(threshold: float, show_fft: bool):
-    """Primary Image Detector page designed with Apple & Aceternity UI components."""
+    """Primary Image Detector page designed with Lamborghini Automotive UI & Aceternity Spotlight."""
+    st.markdown('<div class="lambo-spotlight"></div>', unsafe_allow_html=True)
+    
     st.markdown("""
-    <div class="apple-badge">
-        <span>CIFAKE Benchmark · ResNet-50</span>
+    <div class="lambo-badge">
+        <span>CIFAKE BENCHMARK // RESNET-50 OPTICAL TELEMETRY</span>
     </div>
-    <div class="apple-hero-title">AI vs. Real Image Classifier</div>
-    <div class="apple-hero-subtitle">Authentic photographic verification powered by deep residual transfer learning and 2D Fourier frequency analysis.</div>
+    <div class="lambo-hero-title">AI VS. REAL IMAGE DETECTOR</div>
+    <div class="lambo-hero-subtitle">HIGH-PRECISION FORENSIC CLASSIFICATION SYSTEM FOR AUTONOMOUS SYNTHETIC MEDIA VERIFICATION.</div>
     """, unsafe_allow_html=True)
 
     col_input, col_results = st.columns([1, 1.25], gap="large")
@@ -554,12 +623,12 @@ def page_detector(threshold: float, show_fft: bool):
     image_source_name = "Uploaded Image"
 
     with col_input:
-        st.markdown('<div class="apple-card">', unsafe_allow_html=True)
-        st.markdown('<div class="apple-card-title">1. Source Image</div>', unsafe_allow_html=True)
-        input_mode = st.radio("Source Mode:", ["Upload Photo", "Sample Library"], horizontal=True, label_visibility="collapsed")
+        st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
+        st.markdown('<div class="lambo-card-title">01 // SOURCE INTAKE</div>', unsafe_allow_html=True)
+        input_mode = st.radio("Source Mode:", ["Upload Media", "Preset Library"], horizontal=True, label_visibility="collapsed")
 
-        if input_mode == "Upload Photo":
-            uploaded_file = st.file_uploader("Select an image (PNG, JPG, WEBP)", type=["png", "jpg", "jpeg", "webp"])
+        if input_mode == "Upload Media":
+            uploaded_file = st.file_uploader("Select input image (PNG, JPG, WEBP)", type=["png", "jpg", "jpeg", "webp"])
             if uploaded_file is not None:
                 selected_image = Image.open(uploaded_file).convert("RGB")
                 image_source_name = uploaded_file.name
@@ -579,18 +648,17 @@ def page_detector(threshold: float, show_fft: bool):
                 st.warning("Samples directory not found.")
 
         if selected_image is not None:
-            # Apple resting product shadow applied
-            st.image(selected_image, caption=f"{image_source_name} ({selected_image.size[0]} × {selected_image.size[1]} px)", use_container_width=True)
+            st.image(selected_image, caption=f"{image_source_name.upper()} // [{selected_image.size[0]} × {selected_image.size[1]} PX]", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col_results:
-        st.markdown('<div class="apple-card">', unsafe_allow_html=True)
-        st.markdown('<div class="apple-card-title">2. Analysis & Diagnostics</div>', unsafe_allow_html=True)
+        st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
+        st.markdown('<div class="lambo-card-title">02 // FORENSIC TELEMETRY</div>', unsafe_allow_html=True)
 
         if selected_image is None:
-            st.info("Upload an image on the left or choose from the sample library to run verification.")
+            st.info("ENGAGE MEDIA INTAKE ON THE LEFT PANEL TO INITIATE MULTI-DOMAIN FORENSIC VERIFICATION.")
         else:
-            with st.spinner("Analyzing optical noise and spectral harmonics..."):
+            with st.spinner("EXECUTING RESNET-50 INFERENCE & 2D FFT SPATIAL HARMONIC COMPUTATION..."):
                 img_array = np.array(selected_image)
                 result = predict_image(img_array, threshold=threshold)
 
@@ -600,51 +668,51 @@ def page_detector(threshold: float, show_fft: bool):
             p_ai = result["probabilities"]["AI"]
             latency = result["processing_time_ms"]
 
-            # Apple Style Clean Verdict Card
+            # Lamborghini Cockpit Verdict Panel
             if is_real:
                 st.markdown(f"""
-                <div class="apple-verdict-real">
-                    <div class="apple-verdict-tag tag-real">Authentic Media Verification</div>
-                    <div class="apple-verdict-headline headline-real">Real Photograph</div>
-                    <div class="apple-verdict-sub">Confidence: <b>{conf * 100:.1f}%</b> &nbsp;·&nbsp; Latency: <b>{latency} ms</b></div>
+                <div class="lambo-verdict-real">
+                    <div class="lambo-verdict-tag tag-real">VERIFICATION STATUS: AUTHENTIC</div>
+                    <div class="lambo-verdict-headline headline-real">REAL PHOTOGRAPH</div>
+                    <div class="lambo-verdict-sub">CONFIDENCE: <b>{conf * 100:.1f}%</b> &nbsp;//&nbsp; LATENCY: <b>{latency} MS</b> &nbsp;//&nbsp; OPTICAL BAYER SENSOR NOISE VERIFIED</div>
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown(f"""
-                <div class="apple-verdict-ai">
-                    <div class="apple-verdict-tag tag-ai">Synthetic Media Detected</div>
-                    <div class="apple-verdict-headline headline-ai">AI-Generated Image</div>
-                    <div class="apple-verdict-sub">Confidence: <b>{conf * 100:.1f}%</b> &nbsp;·&nbsp; Latency: <b>{latency} ms</b></div>
+                <div class="lambo-verdict-ai">
+                    <div class="lambo-verdict-tag tag-ai">VERIFICATION STATUS: SYNTHETIC MANIFOLD DETECTED</div>
+                    <div class="lambo-verdict-headline headline-ai">AI-GENERATED IMAGE</div>
+                    <div class="lambo-verdict-sub">CONFIDENCE: <b>{conf * 100:.1f}%</b> &nbsp;//&nbsp; LATENCY: <b>{latency} MS</b> &nbsp;//&nbsp; DECONVOLUTION PERIODIC HARMONICS IDENTIFIED</div>
                 </div>
                 """, unsafe_allow_html=True)
 
-            # Apple Probability Bars
-            st.markdown('<p style="font-size: 12px; font-weight: 600; color: #7a7a7a; text-transform: uppercase; letter-spacing: 0.04em; margin: 16px 0 6px 0;">PROBABILITY DISTRIBUTION</p>', unsafe_allow_html=True)
+            # High-Contrast Probability Gauges
+            st.markdown('<p style="font-size: 11px; font-weight: 800; color: #7D7D7D; text-transform: uppercase; letter-spacing: 0.12em; margin: 18px 0 6px 0;">PROBABILITY DISTRIBUTION</p>', unsafe_allow_html=True)
             b1, b2 = st.columns(2)
             with b1:
-                st.metric("P(Real Image)", f"{p_real * 100:.2f}%")
+                st.metric("P(REAL PHOTOGRAPH)", f"{p_real * 100:.2f}%")
                 st.progress(p_real)
             with b2:
-                st.metric("P(AI-Generated)", f"{p_ai * 100:.2f}%")
+                st.metric("P(AI-GENERATED)", f"{p_ai * 100:.2f}%")
                 st.progress(p_ai)
 
-            # Apple Diagnostic Note
+            # Lamborghini Diagnostic Finding Note
             st.markdown(f"""
-            <div class="apple-diagnostic-note">
-                <b style="color: #0066cc;">Diagnostic Finding:</b> {result["explanation"]}
+            <div class="lambo-diagnostic-note">
+                <b style="color: #FFC000; text-transform: uppercase; letter-spacing: 0.08em;">DIAGNOSTIC REPORT:</b> {result["explanation"]}
             </div>
             """, unsafe_allow_html=True)
 
-            # Aceternity Bento Grid - Apple Telemetry Tiles
-            st.markdown('<p style="font-size: 12px; font-weight: 600; color: #7a7a7a; text-transform: uppercase; letter-spacing: 0.04em; margin: 16px 0 8px 0;">SPECTRAL & SPATIAL TELEMETRY</p>', unsafe_allow_html=True)
+            # Aceternity Bento Grid - Cockpit Instrument Cluster
+            st.markdown('<p style="font-size: 11px; font-weight: 800; color: #7D7D7D; text-transform: uppercase; letter-spacing: 0.12em; margin: 18px 0 8px 0;">SPECTRAL & SPATIAL TELEMETRY MATRIX</p>', unsafe_allow_html=True)
             t1, t2, t3, t4 = st.columns(4)
             with t1:
                 peak_val = result['artifacts'].get('spectral_peak_ratio', 1.0)
                 st.markdown(f"""
                 <div class="bento-tile">
                     <div class="bento-tile-value">{peak_val:.1f}x</div>
-                    <div class="bento-tile-label">Peak Harmonics</div>
-                    <span class="bento-tile-chip">{'Natural 1/f' if peak_val < 15.0 else 'Periodic Spike'}</span>
+                    <div class="bento-tile-label">PEAK HARMONICS</div>
+                    <span class="bento-tile-chip">{'OPTICAL 1/F' if peak_val < 15.0 else 'PERIODIC SPIKE'}</span>
                 </div>
                 """, unsafe_allow_html=True)
             with t2:
@@ -652,8 +720,8 @@ def page_detector(threshold: float, show_fft: bool):
                 st.markdown(f"""
                 <div class="bento-tile">
                     <div class="bento-tile-value">{kurt_val:.1f}</div>
-                    <div class="bento-tile-label">Gradient Kurtosis</div>
-                    <span class="bento-tile-chip">{'Gaussian' if kurt_val < 30.0 else 'Leptokurtic'}</span>
+                    <div class="bento-tile-label">GRADIENT KURTOSIS</div>
+                    <span class="bento-tile-chip">{'GAUSSIAN' if kurt_val < 30.0 else 'LEPTOKURTIC'}</span>
                 </div>
                 """, unsafe_allow_html=True)
             with t3:
@@ -661,8 +729,8 @@ def page_detector(threshold: float, show_fft: bool):
                 st.markdown(f"""
                 <div class="bento-tile">
                     <div class="bento-tile-value">{noise_val:.2f}</div>
-                    <div class="bento-tile-label">Sensor Noise</div>
-                    <span class="bento-tile-chip">{'Physical Shot' if 1.0 <= noise_val <= 6.5 else 'Denoised'}</span>
+                    <div class="bento-tile-label">SENSOR NOISE</div>
+                    <span class="bento-tile-chip">{'PHYSICAL SHOT' if 1.0 <= noise_val <= 6.5 else 'DENOISED'}</span>
                 </div>
                 """, unsafe_allow_html=True)
             with t4:
@@ -670,30 +738,30 @@ def page_detector(threshold: float, show_fft: bool):
                 st.markdown(f"""
                 <div class="bento-tile">
                     <div class="bento-tile-value">{hl_val:.3f}</div>
-                    <div class="bento-tile-label">Spectral Ratio</div>
-                    <span class="bento-tile-chip">{'Optical MTF' if hl_val < 1.5 else 'Elevated HF'}</span>
+                    <div class="bento-tile-label">SPECTRAL RATIO</div>
+                    <span class="bento-tile-chip">{'MTF ROLLOFF' if hl_val < 1.5 else 'ELEVATED HF'}</span>
                 </div>
                 """, unsafe_allow_html=True)
 
-            # 2D Fourier Magnitude
+            # 2D Fourier Magnitude Spectrum
             if show_fft:
                 st.markdown("---")
-                st.markdown('<p style="font-size: 12px; font-weight: 600; color: #7a7a7a; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px;">2D FOURIER SPECTRUM ANALYSIS</p>', unsafe_allow_html=True)
+                st.markdown('<p style="font-size: 11px; font-weight: 800; color: #7D7D7D; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 8px;">2D FOURIER POWER SPECTRUM</p>', unsafe_allow_html=True)
                 spec = result["spectrum_2d"]
 
                 f1, f2 = st.columns(2)
                 with f1:
-                    st.image(selected_image.resize((256, 256)), caption="Analysis Resolution", use_container_width=True)
+                    st.image(selected_image.resize((256, 256)), caption="ANALYSIS SAMPLING RESOLUTION", use_container_width=True)
                 with f2:
                     fig, ax = plt.subplots(figsize=(3.5, 3.5), dpi=120)
-                    fig.patch.set_facecolor('#ffffff')
-                    ax.set_facecolor('#ffffff')
+                    fig.patch.set_facecolor('#000000')
+                    ax.set_facecolor('#000000')
                     im = ax.imshow(spec, cmap="inferno")
-                    ax.set_title("2D Magnitude Spectrum", fontsize=8, color="#1d1d1f")
+                    ax.set_title("2D MAGNITUDE SPECTRUM", fontsize=8, color="#FFFFFF", fontweight="bold")
                     ax.axis("off")
                     cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-                    cbar.ax.yaxis.set_tick_params(color='#7a7a7a')
-                    plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='#7a7a7a', fontsize=7)
+                    cbar.ax.yaxis.set_tick_params(color='#7D7D7D')
+                    plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='#7D7D7D', fontsize=7)
                     st.pyplot(fig)
                     plt.close()
 
@@ -701,59 +769,61 @@ def page_detector(threshold: float, show_fft: bool):
 
 
 def page_frequency_studio():
-    """Spectral Analysis Studio comparing authentic optical decay against periodic neural upsampling."""
+    """Spectral Analysis Studio comparing authentic optical lens decay against periodic neural upsampling."""
+    st.markdown('<div class="lambo-spotlight"></div>', unsafe_allow_html=True)
+    
     st.markdown("""
-    <div class="apple-badge">
-        <span>2D Fourier Frequency Forensics</span>
+    <div class="lambo-badge">
+        <span>2D FOURIER MTF ANALYSIS // SPECTRAL FORENSICS</span>
     </div>
-    <div class="apple-hero-title">Spectral Analysis Studio</div>
-    <div class="apple-hero-subtitle">Observe generative neural transposed-convolution checkerboard spikes vs. physical 1/f optical MTF lens decay.</div>
+    <div class="lambo-hero-title">SPECTRAL ANALYSIS STUDIO</div>
+    <div class="lambo-hero-subtitle">EXAMINE PERIODIC DECONVOLUTION CHECKERBOARD SPIKES VS. PHYSICAL 1/F² OPTICAL MTF LENS DECAY.</div>
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    <div class="apple-card" style="font-size: 15px; color: #333333; line-height: 1.55;">
-        <span style="font-weight: 600; color: #1d1d1f;">The Science of Frequency Domain Forensics:</span><br>
-        Generative models (GANs and Latent Diffusion models like Stable Diffusion) upscale feature maps using transposed convolutions 
-        or bilinear interpolation. This mathematical operation introduces <b>periodic grid harmonics</b> that appear as 
-        symmetrical off-axis delta spikes in 2D Discrete Fourier space. Real camera lenses, by contrast, follow physical optics: 
-        azimuthal power spectral density naturally decays monotonically according to the <b>1/f² power law</b>.
+    <div class="lambo-card" style="font-size: 14px; color: #CCCCCC; line-height: 1.6;">
+        <span style="font-weight: 800; color: #FFC000; text-transform: uppercase; letter-spacing: 0.08em;">PHYSICAL OPTICS VS. GENERATIVE DECONVOLUTION:</span><br>
+        Generative latent diffusion models (Stable Diffusion, Midjourney) upscale intermediate feature representations using transposed convolutions 
+        or bilinear upsampling grids. This mathematical procedure imprints <b>periodic delta harmonics</b> into 2D Discrete Fourier space. 
+        Physical camera lenses, conversely, adhere to electromagnetic wave optics: azimuthal power spectral density attenuates 
+        monotonically according to the <b>1/f² power decay law</b>.
     </div>
     """, unsafe_allow_html=True)
 
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown('<div class="apple-card">', unsafe_allow_html=True)
-        st.markdown('<div class="apple-card-title">Authentic CIFAR-10 Sample</div>', unsafe_allow_html=True)
+        st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
+        st.markdown('<div class="lambo-card-title">AUTHENTIC BENCHMARK SPECIMEN</div>', unsafe_allow_html=True)
         real_sample = SAMPLES_REAL / "01_real_airplane.jpg"
         if real_sample.exists():
             img_real = Image.open(real_sample).convert("RGB")
-            st.image(img_real.resize((256, 256)), caption="Real Airplane (CIFAR-10)", use_container_width=True)
+            st.image(img_real.resize((256, 256)), caption="REAL AIRPLANE (CIFAR-10 PHOTOGRAPH)", use_container_width=True)
             res_real = predict_image(np.array(img_real))
 
             fig, ax = plt.subplots(figsize=(4, 4), dpi=120)
-            fig.patch.set_facecolor('#ffffff')
-            ax.set_facecolor('#ffffff')
+            fig.patch.set_facecolor('#000000')
+            ax.set_facecolor('#000000')
             ax.imshow(res_real["spectrum_2d"], cmap="viridis")
-            ax.set_title("Natural 1/f Smooth Decay Spectrum", fontsize=9, color="#1d1d1f")
+            ax.set_title("SMOOTH 1/F² OPTICAL POWER DECAY", fontsize=9, color="#FFFFFF", fontweight="bold")
             ax.axis("off")
             st.pyplot(fig)
             plt.close()
         st.markdown('</div>', unsafe_allow_html=True)
 
     with c2:
-        st.markdown('<div class="apple-card">', unsafe_allow_html=True)
-        st.markdown('<div class="apple-card-title">Synthetic AI Sample (Stable Diffusion)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
+        st.markdown('<div class="lambo-card-title">SYNTHETIC GENERATIVE SPECIMEN</div>', unsafe_allow_html=True)
         ai_sample = SAMPLES_AI / "01_ai_hyperrealistic_cyberpunk_neon_car.jpg"
         if ai_sample.exists():
             img_ai = Image.open(ai_sample).convert("RGB")
-            st.image(img_ai.resize((256, 256)), caption="AI Generated Car (Synthetic)", use_container_width=True)
+            st.image(img_ai.resize((256, 256)), caption="SYNTHETIC CYBERPUNK CAR (STABLE DIFFUSION)", use_container_width=True)
             res_ai = predict_image(np.array(img_ai))
 
             fig, ax = plt.subplots(figsize=(4, 4), dpi=120)
-            fig.patch.set_facecolor('#ffffff')
-            ax.set_facecolor('#ffffff')
+            fig.patch.set_facecolor('#000000')
+            ax.set_facecolor('#000000')
             ax.imshow(res_ai["spectrum_2d"], cmap="inferno")
-            ax.set_title("Synthetic Spectrum (Periodic Harmonics)", fontsize=9, color="#1d1d1f")
+            ax.set_title("PERIODIC HARMONIC DELTA SPIKES", fontsize=9, color="#FFFFFF", fontweight="bold")
             ax.axis("off")
             st.pyplot(fig)
             plt.close()
@@ -762,44 +832,46 @@ def page_frequency_studio():
 
 def page_architecture():
     """Model Benchmarks and Deep Residual Architecture specifications."""
+    st.markdown('<div class="lambo-spotlight"></div>', unsafe_allow_html=True)
+    
     st.markdown("""
-    <div class="apple-badge">
-        <span>ResNet-50 Architecture</span>
+    <div class="lambo-badge">
+        <span>RESNET-50 DEEP RESIDUAL SUITE // BENCHMARKS</span>
     </div>
-    <div class="apple-hero-title">Model Specifications & Benchmarks</div>
-    <div class="apple-hero-subtitle">Evaluation on 12,000 CIFAKE test benchmark images matching the original project report.</div>
+    <div class="lambo-hero-title">MODEL SPECIFICATIONS & TELEMETRY</div>
+    <div class="lambo-hero-subtitle">SYSTEM EVALUATION ON 12,000 CIFAKE TEST BENCHMARK IMAGES.</div>
     """, unsafe_allow_html=True)
 
     metrics = load_metrics_data()
 
-    # 4 Key Apple Metric Tiles
+    # 4 Key Lamborghini Metric Tiles
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         st.markdown(f"""
-        <div class="apple-card" style="text-align: center; padding: 20px;">
-            <div style="font-size: 32px; font-weight: 600; color: #1d1d1f; font-family: 'JetBrains Mono', monospace;">{metrics['accuracy'] * 100:.2f}%</div>
-            <div style="font-size: 13px; color: #7a7a7a; font-weight: 500; margin-top: 4px;">Test Accuracy</div>
+        <div class="lambo-card" style="text-align: left; padding: 20px;">
+            <div style="font-size: 11px; font-weight: 800; color: #7D7D7D; text-transform: uppercase; letter-spacing: 0.12em;">TEST ACCURACY</div>
+            <div style="font-size: 32px; font-weight: 900; color: #FFC000; font-family: 'JetBrains Mono', monospace; margin-top: 4px;">{metrics['accuracy'] * 100:.2f}%</div>
         </div>
         """, unsafe_allow_html=True)
     with c2:
         st.markdown(f"""
-        <div class="apple-card" style="text-align: center; padding: 20px;">
-            <div style="font-size: 32px; font-weight: 600; color: #1d1d1f; font-family: 'JetBrains Mono', monospace;">{metrics['precision_macro'] * 100:.2f}%</div>
-            <div style="font-size: 13px; color: #7a7a7a; font-weight: 500; margin-top: 4px;">Precision (Macro)</div>
+        <div class="lambo-card" style="text-align: left; padding: 20px;">
+            <div style="font-size: 11px; font-weight: 800; color: #7D7D7D; text-transform: uppercase; letter-spacing: 0.12em;">MACRO PRECISION</div>
+            <div style="font-size: 32px; font-weight: 900; color: #FFFFFF; font-family: 'JetBrains Mono', monospace; margin-top: 4px;">{metrics['precision_macro'] * 100:.2f}%</div>
         </div>
         """, unsafe_allow_html=True)
     with c3:
         st.markdown(f"""
-        <div class="apple-card" style="text-align: center; padding: 20px;">
-            <div style="font-size: 32px; font-weight: 600; color: #1d1d1f; font-family: 'JetBrains Mono', monospace;">{metrics['recall_macro'] * 100:.2f}%</div>
-            <div style="font-size: 13px; color: #7a7a7a; font-weight: 500; margin-top: 4px;">Recall (Macro)</div>
+        <div class="lambo-card" style="text-align: left; padding: 20px;">
+            <div style="font-size: 11px; font-weight: 800; color: #7D7D7D; text-transform: uppercase; letter-spacing: 0.12em;">MACRO RECALL</div>
+            <div style="font-size: 32px; font-weight: 900; color: #FFFFFF; font-family: 'JetBrains Mono', monospace; margin-top: 4px;">{metrics['recall_macro'] * 100:.2f}%</div>
         </div>
         """, unsafe_allow_html=True)
     with c4:
         st.markdown(f"""
-        <div class="apple-card" style="text-align: center; padding: 20px;">
-            <div style="font-size: 32px; font-weight: 600; color: #1d1d1f; font-family: 'JetBrains Mono', monospace;">{metrics['f1_macro'] * 100:.2f}%</div>
-            <div style="font-size: 13px; color: #7a7a7a; font-weight: 500; margin-top: 4px;">F1-Score</div>
+        <div class="lambo-card" style="text-align: left; padding: 20px;">
+            <div style="font-size: 11px; font-weight: 800; color: #7D7D7D; text-transform: uppercase; letter-spacing: 0.12em;">F1-SCORE</div>
+            <div style="font-size: 32px; font-weight: 900; color: #FFC000; font-family: 'JetBrains Mono', monospace; margin-top: 4px;">{metrics['f1_macro'] * 100:.2f}%</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -807,8 +879,8 @@ def page_architecture():
 
     col_chart1, col_chart2 = st.columns(2)
     with col_chart1:
-        st.markdown('<div class="apple-card">', unsafe_allow_html=True)
-        st.markdown('<div class="apple-card-title">Confusion Matrix (12,000 Test Images)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
+        st.markdown('<div class="lambo-card-title">CONFUSION MATRIX // 12,000 TEST IMAGES</div>', unsafe_allow_html=True)
         cm_path = ASSETS_DIR / "confusion_matrix.png"
         if cm_path.exists():
             st.image(str(cm_path), use_container_width=True)
@@ -817,8 +889,8 @@ def page_architecture():
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col_chart2:
-        st.markdown('<div class="apple-card">', unsafe_allow_html=True)
-        st.markdown('<div class="apple-card-title">Training & Validation Loss / Accuracy</div>', unsafe_allow_html=True)
+        st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
+        st.markdown('<div class="lambo-card-title">TRAINING & VALIDATION DYNAMICS</div>', unsafe_allow_html=True)
         curves_path = ASSETS_DIR / "accuracy_loss_curves.png"
         if curves_path.exists():
             st.image(str(curves_path), use_container_width=True)
@@ -826,27 +898,27 @@ def page_architecture():
             st.info("Curves available in assets.")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="apple-card">', unsafe_allow_html=True)
-    st.markdown('<div class="apple-card-title">Classification Performance Report</div>', unsafe_allow_html=True)
+    st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
+    st.markdown('<div class="lambo-card-title">CLASSIFICATION PERFORMANCE REPORT</div>', unsafe_allow_html=True)
     df_metrics = pd.DataFrame({
-        "Class": ["AI (Synthetic)", "REAL (CIFAR-10)", "Macro Average", "Weighted Average"],
-        "Precision": ["89.80%", "95.09%", "92.42%", "92.45%"],
-        "Recall": ["95.40%", "89.17%", "92.30%", "92.28%"],
-        "F1-Score": ["92.52%", "92.03%", "92.24%", "92.28%"],
-        "Support": ["6,000", "6,000", "12,000", "12,000"]
+        "CLASS": ["AI (SYNTHETIC)", "REAL (CIFAR-10)", "MACRO AVERAGE", "WEIGHTED AVERAGE"],
+        "PRECISION": ["89.80%", "95.09%", "92.42%", "92.45%"],
+        "RECALL": ["95.40%", "89.17%", "92.30%", "92.28%"],
+        "F1-SCORE": ["92.52%", "92.03%", "92.24%", "92.28%"],
+        "SUPPORT": ["6,000", "6,000", "12,000", "12,000"]
     })
     st.table(df_metrics)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="apple-card">', unsafe_allow_html=True)
-    st.markdown('<div class="apple-card-title">ResNet-50 Sequential Architecture</div>', unsafe_allow_html=True)
+    st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
+    st.markdown('<div class="lambo-card-title">RESNET-50 SEQUENTIAL ARCHITECTURE</div>', unsafe_allow_html=True)
     st.code("""
 Model: "sequential_resnet50_cifake"
 _________________________________________________________________
  Layer (type)                Output Shape              Param #   
 =================================================================
  resnet50 (Functional)       (None, 1, 1, 2048)        23,587,712
-   [Pretrained ImageNet base, fine-tuned on CIFAKE]
+   [Pretrained ImageNet base, fine-tuned on CIFAKE dataset]
  flatten (Flatten)           (None, 2048)              0         
  dense_256 (Dense)           (None, 256)               524,544   
  batch_norm (BatchNorm)      (None, 256)               1,024     
@@ -870,20 +942,22 @@ Optimization Configuration:
 
 def page_batch_evaluation(threshold: float):
     """Batch forensic evaluation pipeline with CSV export."""
+    st.markdown('<div class="lambo-spotlight"></div>', unsafe_allow_html=True)
+    
     st.markdown("""
-    <div class="apple-badge">
-        <span>Batch Evaluation Pipeline</span>
+    <div class="lambo-badge">
+        <span>BATCH INGESTION PIPELINE // MULTI-SPECIMEN</span>
     </div>
-    <div class="apple-hero-title">Batch Media Evaluator</div>
-    <div class="apple-hero-subtitle">Upload multiple images concurrently to generate a forensic audit report and export results as CSV.</div>
+    <div class="lambo-hero-title">BATCH MEDIA EVALUATOR</div>
+    <div class="lambo-hero-subtitle">CONCURRENT MULTI-SPECIMEN FORENSIC EVALUATION WITH INSTANT CSV AUDIT EXPORT.</div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="apple-card">', unsafe_allow_html=True)
-    st.markdown('<div class="apple-card-title">Ingest Media Batch</div>', unsafe_allow_html=True)
+    st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
+    st.markdown('<div class="lambo-card-title">INGEST MEDIA BATCH</div>', unsafe_allow_html=True)
     uploaded_files = st.file_uploader("Select images to analyze:", type=["png", "jpg", "jpeg", "webp"], accept_multiple_files=True)
 
     if uploaded_files:
-        st.write(f"Analyzing {len(uploaded_files)} images...")
+        st.write(f"EVALUATING {len(uploaded_files)} SPECIMENS...")
         results = []
         progress_bar = st.progress(0.0)
 
@@ -919,49 +993,51 @@ def page_batch_evaluation(threshold: float):
         n_ai = sum(df["Predicted Class"] == "AI-GENERATED")
         col_s1, col_s2, col_s3 = st.columns(3)
         with col_s1:
-            st.metric("Total Processed", len(df))
+            st.metric("TOTAL SPECIMENS", len(df))
         with col_s2:
-            st.metric("Real Photos", n_real)
+            st.metric("REAL SPECIMENS", n_real)
         with col_s3:
-            st.metric("AI Images", n_ai)
+            st.metric("SYNTHETIC SPECIMENS", n_ai)
 
         csv_data = df.to_csv(index=False).encode("utf-8")
-        st.download_button("Download CSV Report", data=csv_data, file_name="cifake_batch_results.csv", mime="text/csv")
+        st.download_button("EXPORT AUDIT CSV REPORT", data=csv_data, file_name="cifake_batch_results.csv", mime="text/csv")
     st.markdown('</div>', unsafe_allow_html=True)
 
 
 def page_about():
     """About CIFAKE dataset and research background."""
+    st.markdown('<div class="lambo-spotlight"></div>', unsafe_allow_html=True)
+    
     st.markdown("""
-    <div class="apple-badge">
-        <span>Research & Dataset</span>
+    <div class="lambo-badge">
+        <span>RESEARCH & DATASET // CIFAKE BENCHMARK</span>
     </div>
-    <div class="apple-hero-title">About the CIFAKE Project</div>
-    <div class="apple-hero-subtitle">Open-source forensic research for distinguishing synthetic media from camera photography.</div>
+    <div class="lambo-hero-title">ABOUT THE CIFAKE PROJECT</div>
+    <div class="lambo-hero-subtitle">SCIENTIFIC FORENSIC RESEARCH FOR DISCRIMINATING GENERATIVE SYNTHESIS FROM CAMERA SENSORS.</div>
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    <div class="apple-card" style="line-height: 1.6; color: #333333; font-size: 15px;">
-        <h4 style="color: #1d1d1f; margin-top: 0; font-size: 21px;">Project Background</h4>
+    <div class="lambo-card" style="line-height: 1.6; color: #CCCCCC; font-size: 14px;">
+        <h4 style="color: #FFC000; margin-top: 0; font-size: 18px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;">PROJECT GENESIS</h4>
         <p>
-        As generative diffusion models (Stable Diffusion, Midjourney, DALL-E) become increasingly photorealistic, 
-        verifiable authentication of digital media is essential to combat synthetic misinformation. 
-        This application implements transfer learning and frequency-domain analysis to evaluate images against physical 
-        camera optics and generative noise signatures.
+        As modern latent diffusion architectures (Stable Diffusion, Midjourney, DALL-E) attain hyper-realistic visual fidelity, 
+        algorithmic verification of digital media authenticity is mission-critical. 
+        This system deploys deep transfer learning coupled with frequency-domain spatial harmonic analysis to evaluate images 
+        against optical Bayer sensor noise models and generative upsampling artifacts.
         </p>
 
-        <h4 style="color: #1d1d1f; margin-top: 24px; font-size: 21px;">CIFAKE Dataset</h4>
+        <h4 style="color: #FFC000; margin-top: 24px; font-size: 18px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;">CIFAKE BENCHMARK CORPUS</h4>
         <p>
-        • <b>60,000 Real Images</b>: CIFAR-10 photographic benchmark across 10 classes.<br>
-        • <b>60,000 Synthetic Images</b>: Generated with Stable Diffusion 1.4 using matched semantic prompts.<br>
-        • <b>Data Split</b>: 100,000 training images (50k Real, 50k Fake) and 20,000 test images (10k Real, 10k Fake).
+        • <b>60,000 REAL SPECIMENS</b>: CIFAR-10 photographic benchmark across 10 semantic classes.<br>
+        • <b>60,000 SYNTHETIC SPECIMENS</b>: Synthesized with Stable Diffusion 1.4 using matched semantic prompts.<br>
+        • <b>PARTITIONING</b>: 100,000 training specimens (50k Real, 50k Fake) and 20,000 test specimens (10k Real, 10k Fake).
         </p>
 
-        <h4 style="color: #1d1d1f; margin-top: 24px; font-size: 21px;">Forensic Detection Methodology</h4>
+        <h4 style="color: #FFC000; margin-top: 24px; font-size: 18px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;">FORENSIC DETECTION ALGORITHMS</h4>
         <p>
-        1. <b>Flat-Region Sensor Noise Estimation</b>: Measures physical Poisson-Gaussian shot noise in smooth areas to avoid edge aliasing false positives.<br>
-        2. <b>Color Channel Cross-Correlation</b>: Validates physical Bayer demosaicing optical coupling between color channels.<br>
-        3. <b>2D FFT Spectrum Analysis</b>: Evaluates off-axis periodic harmonics from transposed convolution neural upsampling.
+        1. <b>FLAT-REGION SENSOR NOISE ESTIMATION</b>: Quantifies physical Poisson-Gaussian camera shot noise in low-gradient domains to eliminate edge-aliasing false positives.<br>
+        2. <b>COLOR CHANNEL COVARIANCE</b>: Validates physical Bayer demosaicing optical coupling between chromatic channels.<br>
+        3. <b>2D FFT POWER SPECTRUM ANALYSIS</b>: Evaluates off-axis periodic delta spikes originating from transposed convolution neural upsampling layers.
         </p>
     </div>
     """, unsafe_allow_html=True)
