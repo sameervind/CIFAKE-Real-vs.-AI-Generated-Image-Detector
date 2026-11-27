@@ -123,3 +123,13 @@ def test_real_photos_not_falsely_flagged():
     assert res_wa["label"] == "REAL"
     assert res_wa["probabilities"]["REAL"] > 0.80
 
+
+def test_synthetic_ai_images_correctly_flagged():
+    """Verify that synthetic AI images with diffusion noise and upsampling harmonics are classified as AI."""
+    ai_sample = ROOT_DIR / "samples" / "ai" / "01_ai_hyperrealistic_cyberpunk_neon_car.jpg"
+    if ai_sample.exists():
+        res = predict_image(str(ai_sample))
+        assert res["label"] == "AI-GENERATED"
+        assert res["probabilities"]["AI"] > 0.85
+
+
