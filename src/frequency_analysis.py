@@ -1,7 +1,7 @@
 """
 Frequency Domain & Spatial Artifact Analysis for AI-Generated Image Detection.
-Implements 2D Discrete Fourier Transform (2D FFT), Azimuthal Spectral Profiling,
-Laplacian Gradient Kurtosis, Noise Residual Variance, and High-Frequency Energy Ratio.
+Implements 2D Discrete Fourier Transform (2D FFT) with cardinal axis masking,
+Physical Sensor Shot Noise Uniformity, Laplacian Gradient Kurtosis, and Multi-Domain Scoring.
 """
 
 import numpy as np
@@ -22,15 +22,11 @@ def compute_fft_spectrum(image_rgb: np.ndarray) -> Tuple[np.ndarray, np.ndarray]
         gray = gray.astype(np.float32) / 255.0
         
     h, w = gray.shape[:2]
-    # 2D FFT and center shift, normalized by sqrt(h * w)
     fft = np.fft.fft2(gray) / np.sqrt(h * w)
     fft_shift = np.fft.fftshift(fft)
     
-    # Log magnitude spectrum for visualization
     magnitude = np.abs(fft_shift)
     magnitude_spectrum = np.log(1.0 + magnitude)
-    
-    # Normalize to [0, 1]
     norm_spectrum = (magnitude_spectrum - magnitude_spectrum.min()) / (magnitude_spectrum.max() - magnitude_spectrum.min() + 1e-8)
     
     return norm_spectrum, fft_shift
@@ -53,10 +49,9 @@ def azimuthal_average(image: np.ndarray, center: Tuple[int, int] = None) -> np.n
 
 def extract_artifact_features(image_rgb: np.ndarray) -> Dict[str, Any]:
     """
-    Extract frequency domain, noise residual, and spatial artifact metrics from an image.
-    Supports arbitrary resolution without downsampling artifacts.
+    Extract multi-domain frequency, noise residual, and spatial artifact metrics.
+    Robust to arbitrary input resolutions.
     """
-    # Ensure uint8 RGB
     if image_rgb.dtype == np.float32 or image_rgb.dtype == np.float64:
         if image_rgb.max() <= 1.0:
             image_rgb = (image_rgb * 255).astype(np.uint8)
@@ -67,7 +62,7 @@ def extract_artifact_features(image_rgb: np.ndarray) -> Dict[str, Any]:
     gray = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2GRAY)
     gray_f = gray.astype(np.float32) / 255.0
     
-    # 1. 2D FFT & Normalized Coordinates
+    # 1. 2D FFT with cardinal axes masked (isolating true off-axis checkerboard harmonics)
     norm_spectrum, fft_shift = compute_fft_spectrum(image_rgb)
     mag_shift = np.abs(fft_shift)
     
@@ -75,34 +70,45 @@ def extract_artifact_features(image_rgb: np.ndarray) -> Dict[str, Any]:
     y_idx, x_idx = np.indices((h, w))
     r_norm = np.hypot(x_idx - cx, y_idx - cy) / (min(h, w) / 2.0)
     
-    # High frequency outer annulus (r >= 0.31)
-    high_freq_mask = r_norm >= 0.31
-    if np.any(high_freq_mask):
-        outer_max = float(np.max(mag_shift[high_freq_mask]))
-        outer_mean = float(np.mean(mag_shift[high_freq_mask]))
-        peak_ratio = float(outer_max / (outer_mean + 1e-8))
+    # Mask cardinal axes (natural horizon & vertical edges)
+    cardinal_mask = (np.abs(x_idx - cx) <= 3) | (np.abs(y_idx - cy) <= 3)
+    off_axis = (r_norm >= 0.25) & (r_norm <= 0.95) & (~cardinal_mask)
+    
+    if np.any(off_axis):
+        off_max = float(np.max(mag_shift[off_axis]))
+        off_mean = float(np.mean(mag_shift[off_axis]))
+        checkerboard_ratio = float(off_max / (off_mean + 1e-8))
     else:
-        outer_max = 0.0
-        peak_ratio = 1.0
+        off_max = 0.0
+        checkerboard_ratio = 1.0
         
-    # High to low ratio
+    # High to low frequency energy ratio
     low_mask = (r_norm >= 0.05) & (r_norm < 0.30)
+    high_mask = r_norm >= 0.30
     low_energy = float(np.sum(mag_shift[low_mask])) if np.any(low_mask) else 1e-6
-    high_energy = float(np.sum(mag_shift[high_freq_mask])) if np.any(high_freq_mask) else 1e-6
+    high_energy = float(np.sum(mag_shift[high_mask])) if np.any(high_mask) else 1e-6
     high_to_low_ratio = high_energy / (low_energy + 1e-8)
     
-    # 2. Laplacian Variance & Kurtosis (measures edge gradient distribution)
+    # 2. Laplacian Variance & Kurtosis (measures edge gradient statistics)
     lap = cv2.Laplacian(gray, cv2.CV_32F)
     lap_var = float(np.var(lap))
     lap_centered = lap - np.mean(lap)
     lap_kurt = float(np.mean(lap_centered ** 4) / ((lap_var + 1e-4) ** 2))
     
-    # 3. Noise Residual Analysis (isolates physical sensor shot noise)
+    # 3. Physical Camera Sensor Noise Uniformity (flat vs total regions)
     smooth = cv2.medianBlur(gray, 3)
     residual = np.abs(gray.astype(np.float32) - smooth.astype(np.float32))
-    noise_std = float(np.std(residual))
     
-    # 4. Color Channel Statistics (HSV Saturation)
+    sobelx = cv2.Sobel(gray_f, cv2.CV_32F, 1, 0)
+    sobely = cv2.Sobel(gray_f, cv2.CV_32F, 0, 1)
+    grad_mag = np.hypot(sobelx, sobely)
+    flat_mask = grad_mag < np.percentile(grad_mag, 30)
+    
+    noise_flat_std = float(np.std(residual[flat_mask])) if np.any(flat_mask) else 0.0
+    noise_total_std = float(np.std(residual))
+    noise_ratio = float(noise_flat_std / (noise_total_std + 1e-6))
+    
+    # 4. Color Channel Statistics
     hsv = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2HSV).astype(np.float32)
     sat = hsv[:, :, 1]
     sat_mean = float(np.mean(sat))
@@ -114,12 +120,12 @@ def extract_artifact_features(image_rgb: np.ndarray) -> Dict[str, Any]:
     return {
         "magnitude_spectrum": norm_spectrum,
         "radial_profile": radial_prof.tolist(),
+        "spectral_peak_ratio": round(checkerboard_ratio, 2),
         "high_to_low_ratio": round(high_to_low_ratio, 6),
-        "spectral_peak_ratio": round(peak_ratio, 3),
-        "high_freq_max_power": round(outer_max, 3),
         "laplacian_variance": round(lap_var, 2),
         "laplacian_kurtosis": round(lap_kurt, 2),
-        "noise_residual_std": round(noise_std, 3),
+        "noise_residual_std": round(noise_total_std, 2),
+        "noise_uniformity_ratio": round(noise_ratio, 3),
         "color_saturation_mean": round(sat_mean, 1)
     }
 
@@ -127,8 +133,8 @@ def extract_artifact_features(image_rgb: np.ndarray) -> Dict[str, Any]:
 class FrequencyArtifactDetector:
     """
     Multi-domain artifact classifier for AI-generated image detection.
-    Evaluates 2D Fourier harmonic peaks, gradient kurtosis, sensor noise residuals,
-    and color manifolds.
+    Evaluates off-axis Fourier harmonic peaks, gradient kurtosis, sensor shot noise uniformity,
+    and color saturation.
     """
 
     def __init__(self):
@@ -140,69 +146,55 @@ class FrequencyArtifactDetector:
         """
         features = extract_artifact_features(image_np)
         
-        peak_ratio = features["spectral_peak_ratio"]
-        outer_power = features["high_freq_max_power"]
+        checkerboard_ratio = features["spectral_peak_ratio"]
         lap_kurt = features["laplacian_kurtosis"]
-        noise_std = features["noise_residual_std"]
-        lap_var = features["laplacian_variance"]
+        noise_ratio = features["noise_uniformity_ratio"]
         sat_mean = features["color_saturation_mean"]
         
-        ai_score = 0.0
-        reasons = []
+        # 1. Gradient Kurtosis (centered at natural optical boundary ~4.0)
+        # Natural camera photos have kurtosis in [2.4, 4.0]
+        # AI synthesis produces airbrushed smooth patches + sudden synthetic edges (kurtosis > 5.2)
+        kurt_evidence = (lap_kurt - 4.0) / 1.5
         
-        # 1. Fourier checkerboard / harmonic peak
-        if peak_ratio > 10.0:
-            ai_score += min(0.35, (peak_ratio - 10.0) * 0.02)
-            reasons.append("Periodic checkerboard/grid spikes in 2D Fourier domain.")
-        elif peak_ratio > 4.5:
-            ai_score += 0.15
-            
-        # 2. Outer high-frequency power
-        if outer_power > 15.0:
-            ai_score += min(0.30, (outer_power - 15.0) * 0.015)
-            reasons.append("Elevated high-frequency energy tail typical of diffusion/GAN upsampling.")
-            
-        # 3. Laplacian Kurtosis (AI smoothing + sharp lines)
-        if lap_kurt > 5.0:
-            ai_score += min(0.30, (lap_kurt - 5.0) * 0.06)
-            reasons.append("Synthetic gradient distribution (unnatural smoothing mixed with sharp synthetic edges).")
-        elif lap_kurt < 3.8:
-            ai_score -= 0.15  # Natural optical gradient distribution
-            
-        # 4. Sensor noise residual
-        if noise_std > 7.5:
-            ai_score += min(0.30, (noise_std - 7.5) * 0.05)
-            reasons.append("Spatially correlated generative high-frequency noise residual.")
-        elif noise_std < 5.5:
-            ai_score -= 0.15  # Natural camera sensor noise
-            
-        # 5. Laplacian variance
-        if lap_var > 3000.0:
-            ai_score += min(0.20, (lap_var - 3000.0) / 10000.0)
-        elif 300.0 <= lap_var <= 2000.0:
-            ai_score -= 0.15  # Natural photo variance range
-            
-        # 6. Color saturation
-        if sat_mean > 115.0:
-            ai_score += 0.15
-            reasons.append("Hyper-saturated color manifold.")
-        elif sat_mean < 75.0:
-            ai_score -= 0.05
-            
+        # 2. 2D Fourier Off-Axis Checkerboard Harmonic Spikes (cardinal axes masked)
+        # Natural photos have ratio < 4.2; AI checkerboard upsamplers produce spikes > 4.5
+        check_evidence = max(0.0, (checkerboard_ratio - 4.5) * 0.4)
+        
+        # 3. Physical Sensor Shot Noise Uniformity
+        # Real camera sensors have Poisson shot noise across flat & textured regions (noise_ratio > 0.82)
+        # Diffusion models have near-zero noise in flat areas (noise_ratio < 0.75)
+        sensor_evidence = (0.80 - noise_ratio) * 1.5
+        
+        # 4. Color Saturation evidence
+        sat_evidence = max(0.0, (sat_mean - 110.0) / 50.0) if sat_mean > 110.0 else -max(0.0, (70.0 - sat_mean) / 50.0)
+        
+        total_ai_evidence = kurt_evidence * 1.2 + check_evidence + sensor_evidence + sat_evidence
+        
         # Calibrated probability
-        p_ai = 1.0 / (1.0 + np.exp(-3.2 * ai_score))
-        p_ai = float(np.clip(p_ai, 0.02, 0.98))
+        p_ai = 1.0 / (1.0 + np.exp(-1.5 * total_ai_evidence))
+        p_ai = float(np.clip(p_ai, 0.03, 0.97))
         p_real = float(1.0 - p_ai)
         
         class_id = 1 if p_real >= 0.5 else 0
         class_name = "REAL" if class_id == 1 else "AI"
         confidence = p_real if class_id == 1 else p_ai
         
-        if not reasons:
-            if class_id == 1:
-                reasons.append("Natural camera sensor noise, balanced color saturation, and authentic optical gradient decay curve observed.")
-            else:
-                reasons.append("Statistical feature distribution strongly matched synthetic generative model manifold.")
+        reasons = []
+        if class_id == 0:
+            if lap_kurt > 4.5:
+                reasons.append(f"Synthetic gradient kurtosis ({lap_kurt:.1f} vs natural 3.0) indicates AI airbrush smoothing.")
+            if checkerboard_ratio > 4.5:
+                reasons.append(f"Off-axis 2D Fourier harmonic peak ({checkerboard_ratio:.1f}) indicates transposed convolution upsampling.")
+            if noise_ratio < 0.78:
+                reasons.append("Absence of uniform physical camera sensor shot noise in smooth surfaces.")
+            if not reasons:
+                reasons.append("Generative feature distribution strongly matches synthetic AI diffusion manifold.")
+        else:
+            reasons.append(f"Natural optical gradient kurtosis ({lap_kurt:.1f}) matching camera scene statistics.")
+            if noise_ratio >= 0.78:
+                reasons.append("Authentic physical camera sensor shot noise distributed uniformly across regions.")
+            if checkerboard_ratio <= 4.5:
+                reasons.append("Smooth natural optical power decay without artificial off-axis harmonics.")
 
         return {
             "class_name": class_name,

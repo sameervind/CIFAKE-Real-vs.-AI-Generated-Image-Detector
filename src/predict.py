@@ -106,7 +106,8 @@ def predict_image(
             "high_to_low_ratio": artifact_metrics.get("high_to_low_ratio", 0.0),
             "laplacian_variance": artifact_metrics.get("laplacian_variance", 0.0),
             "laplacian_kurtosis": artifact_metrics.get("laplacian_kurtosis", 3.0),
-            "noise_residual_std": artifact_metrics.get("noise_residual_std", 5.0)
+            "noise_residual_std": artifact_metrics.get("noise_residual_std", 5.0),
+            "noise_uniformity_ratio": artifact_metrics.get("noise_uniformity_ratio", 0.85)
         },
         "spectrum_2d": artifact_metrics.get("magnitude_spectrum", np.zeros((32, 32))),
         "radial_profile": artifact_metrics.get("radial_profile", []),
