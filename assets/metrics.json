@@ -1,0 +1,54 @@
+{
+    "model_architecture": "ResNet50 + Custom Fully Connected Head",
+    "dataset": "CIFAKE (60,000 Real + 60,000 Synthetic Diffusion)",
+    "input_resolution": [
+        32,
+        32,
+        3
+    ],
+    "test_loss": 0.1983,
+    "accuracy": 0.9228,
+    "precision_macro": 0.9242,
+    "recall_macro": 0.923,
+    "f1_macro": 0.9224,
+    "roc_auc": 0.9742,
+    "per_class": {
+        "AI": {
+            "precision": 0.898,
+            "recall": 0.954,
+            "f1_score": 0.9252,
+            "support": 6000
+        },
+        "REAL": {
+            "precision": 0.9509,
+            "recall": 0.8917,
+            "f1_score": 0.9203,
+            "support": 6000
+        }
+    },
+    "confusion_matrix": {
+        "true_ai_pred_ai": 5724,
+        "true_ai_pred_real": 276,
+        "true_real_pred_ai": 650,
+        "true_real_pred_real": 5350,
+        "matrix": [
+            [
+                5724,
+                276
+            ],
+            [
+                650,
+                5350
+            ]
+        ]
+    },
+    "training_config": {
+        "optimizer": "Adam",
+        "initial_learning_rate": 0.001,
+        "lr_decay_factor": 0.95,
+        "early_stopping_patience": 3,
+        "epochs_completed": 10,
+        "batch_size": 32,
+        "split_ratio": "70% Train, 20% Val, 10% Test"
+    }
+}
