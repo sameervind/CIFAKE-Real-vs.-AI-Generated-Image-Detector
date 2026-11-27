@@ -13,6 +13,8 @@ from PIL import Image
 import cv2
 import pandas as pd
 import streamlit as st
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 # Ensure root workspace is on path
@@ -98,7 +100,14 @@ def load_metrics_data():
 
 
 def render_sidebar():
-    st.sidebar.image("https://img.shields.io/badge/ResNet50-92.28%25_Accuracy-blue?style=for-the-badge&logo=tensorflow", use_container_width=True)
+    try:
+        st.sidebar.markdown("""
+        <div style="background-color: #2563eb; color: white; padding: 8px 12px; border-radius: 6px; text-align: center; font-weight: 700; font-size: 0.9rem; margin-bottom: 12px;">
+            ResNet50 · 92.28% Accuracy
+        </div>
+        """, unsafe_allow_html=True)
+    except Exception:
+        pass
     st.sidebar.title("Navigation")
     page = st.sidebar.radio(
         "Select Module:",

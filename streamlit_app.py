@@ -11,7 +11,11 @@ ROOT_DIR = Path(__file__).resolve().parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from app.streamlit_app import main
-
-if __name__ == "__main__":
-    main()
+try:
+    import app.streamlit_app as dashboard
+    dashboard.main()
+except Exception as e:
+    import streamlit as st
+    import traceback
+    st.error(f"Application error during execution: {e}")
+    st.code(traceback.format_exc())
