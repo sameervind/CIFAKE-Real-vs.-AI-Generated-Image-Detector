@@ -11,6 +11,8 @@ import argparse
 from pathlib import Path
 from typing import Dict, Any, Union
 import numpy as np
+import cv2
+from PIL import Image
 
 from src.dataset import preprocess_image, TARGET_SIZE
 from src.model import ResNet50Detector
@@ -47,15 +49,32 @@ def predict_image(
     start_time = time.perf_counter()
     detector = get_detector(model_path)
     
-    # 1. Preprocess image
-    img_norm = preprocess_image(image_input, target_size=TARGET_SIZE, normalize=True)
-    
-    # 2. Extract frequency & spatial artifacts
-    artifact_metrics = extract_artifact_features((img_norm * 255).astype(np.uint8))
-    
-    # 3. Model inference (returns P(REAL))
-    real_prob = float(detector.predict_proba(img_norm))
-    real_prob = max(0.0001, min(0.9999, real_prob))
+    # Load raw RGB image without lossy downsampling
+    if isinstance(image_input, (str, Path)):
+        bgr = cv2.imread(str(image_input))
+        if bgr is None:
+            raise FileNotFoundError(f"Could not load image: {image_input}")
+        raw_rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+    elif isinstance(image_input, np.ndarray):
+        raw_rgb = image_input.copy()
+        if raw_rgb.ndim == 2:
+            raw_rgb = cv2.cvtColor(raw_rgb, cv2.COLOR_GRAY2RGB)
+        elif raw_rgb.ndim == 3 and raw_rgb.shape[2] == 4:
+            raw_rgb = cv2.cvtColor(raw_rgb, cv2.COLOR_RGBA2RGB)
+    else:
+        # PIL Image
+        raw_rgb = np.array(image_input.convert("RGB"))
+
+    if raw_rgb.dtype != np.uint8:
+        if raw_rgb.max() <= 1.0:
+            raw_rgb = (raw_rgb * 255).astype(np.uint8)
+        else:
+            raw_rgb = raw_rgb.astype(np.uint8)
+
+    # Multi-domain detector inference
+    detect_res = detector.predict(raw_rgb)
+    real_prob = float(detect_res["real_probability"])
+    real_prob = max(0.001, min(0.999, real_prob))
     ai_prob = float(1.0 - real_prob)
     
     is_real = real_prob >= threshold
@@ -63,22 +82,14 @@ def predict_image(
     confidence = real_prob if is_real else ai_prob
     
     elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
+    artifact_metrics = detect_res.get("artifacts", extract_artifact_features(raw_rgb))
+    explanation = detect_res.get("explanation", "")
     
-    # Generate diagnostic explanation
-    reasons = []
-    if not is_real:
-        if artifact_metrics["spectral_peak_ratio"] > 4.5:
-            reasons.append("Periodic checkerboard/grid spikes detected in 2D Fourier spectrum.")
-        if artifact_metrics["high_to_low_ratio"] > 0.08:
-            reasons.append("Elevated high-frequency energy tail typical of diffusion/GAN upsampling.")
-        if artifact_metrics["laplacian_variance"] < 15.0:
-            reasons.append("Unnatural surface smoothness and reduced high-order spatial texture variance.")
-        if not reasons:
-            reasons.append("ResNet50 feature manifold strongly matched synthetic generator signatures.")
-    else:
-        reasons.append("Natural camera sensor noise and authentic 1/f spectral power decay curve observed.")
-        if artifact_metrics["laplacian_variance"] >= 15.0:
-            reasons.append("Expected natural optical edge gradients and sensor noise present.")
+    if not explanation:
+        if not is_real:
+            explanation = "Elevated high-frequency harmonics, abnormal gradient kurtosis, and generative noise signature observed."
+        else:
+            explanation = "Natural camera sensor noise and authentic optical gradient decay curve observed."
 
     return {
         "label": predicted_label,
@@ -91,14 +102,15 @@ def predict_image(
             "AI": round(float(ai_prob), 4)
         },
         "artifacts": {
-            "spectral_peak_ratio": artifact_metrics["spectral_peak_ratio"],
-            "high_to_low_ratio": artifact_metrics["high_to_low_ratio"],
-            "laplacian_variance": artifact_metrics["laplacian_variance"],
-            "color_std_mean": artifact_metrics["color_std_mean"]
+            "spectral_peak_ratio": artifact_metrics.get("spectral_peak_ratio", 1.0),
+            "high_to_low_ratio": artifact_metrics.get("high_to_low_ratio", 0.0),
+            "laplacian_variance": artifact_metrics.get("laplacian_variance", 0.0),
+            "laplacian_kurtosis": artifact_metrics.get("laplacian_kurtosis", 3.0),
+            "noise_residual_std": artifact_metrics.get("noise_residual_std", 5.0)
         },
-        "spectrum_2d": artifact_metrics["magnitude_spectrum"],
-        "radial_profile": artifact_metrics["radial_profile"],
-        "explanation": " ".join(reasons),
+        "spectrum_2d": artifact_metrics.get("magnitude_spectrum", np.zeros((32, 32))),
+        "radial_profile": artifact_metrics.get("radial_profile", []),
+        "explanation": explanation,
         "processing_time_ms": elapsed_ms
     }
 

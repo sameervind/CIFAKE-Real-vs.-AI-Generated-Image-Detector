@@ -221,24 +221,30 @@ def page_live_detector(threshold: float, show_fft: bool):
             
             # Artifact Metrics Cards
             st.markdown("#### 📐 Spatial & Spectral Artifact Metrics")
-            m_col1, m_col2, m_col3 = st.columns(3)
+            m_col1, m_col2, m_col3, m_col4 = st.columns(4)
             with m_col1:
                 st.metric(
-                    "High/Low Freq Energy",
-                    f"{result['artifacts']['high_to_low_ratio']:.4f}",
-                    help="Elevated ratios (>0.08) signal diffusion/GAN upsampling noise."
+                    "Spectral Peak Ratio",
+                    f"{result['artifacts'].get('spectral_peak_ratio', 1.0):.2f}",
+                    help="Harmonic peaks indicate periodic checkerboard transposed convolution artifacts."
                 )
             with m_col2:
                 st.metric(
-                    "Spectral Peak Ratio",
-                    f"{result['artifacts']['spectral_peak_ratio']:.2f}",
-                    help="Harmonic peaks indicate periodic checkerboard transposed convolution artifacts."
+                    "Gradient Kurtosis",
+                    f"{result['artifacts'].get('laplacian_kurtosis', 3.0):.2f}",
+                    help="Measures synthetic smoothing + sharp edge tail (>5.0 indicates AI airbrushing; ~3.0 is natural)."
                 )
             with m_col3:
                 st.metric(
-                    "Laplacian Variance",
-                    f"{result['artifacts']['laplacian_variance']:.1f}",
-                    help="Measures edge sharpness and fine texture details."
+                    "Sensor Noise Residual",
+                    f"{result['artifacts'].get('noise_residual_std', 5.0):.2f}",
+                    help="Camera shot noise level (natural photos range 3.5 - 6.5; AI images deviate significantly)."
+                )
+            with m_col4:
+                st.metric(
+                    "High/Low Freq Energy",
+                    f"{result['artifacts'].get('high_to_low_ratio', 0.0):.4f}",
+                    help="Elevated ratios signal diffusion/GAN upsampling energy."
                 )
                 
             # Spectral side-by-side
