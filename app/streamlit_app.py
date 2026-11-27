@@ -594,62 +594,83 @@ def render_sub_nav():
     """, unsafe_allow_html=True)
 
 
-def render_model_offline_alert(err_msg: str):
+def init_model_on_cloud():
+    """Train ResNet-50 transfer learning weights on verification samples for cloud environments."""
+    from src.train import train_pipeline
+    from src.model import get_inference_service, reset_inference_service
+    train_pipeline(
+        data_dir="samples",
+        stage_a_epochs=2,
+        stage_b_epochs=2,
+        batch_size=8,
+        output_path="model/resnet50_cifake.keras"
+    )
+    reset_inference_service()
+    get_inference_service(force_reload=True)
+
+
+def render_model_offline_alert(err_msg: str, button_key: str = "banner_init_model_btn"):
     """Render a prominent Lamborghini cockpit warning with 1-click auto-initialization."""
     st.markdown(f"""
-    <div style="background: #140808; border: 1px solid #FF3B30; border-left: 5px solid #FF3B30; padding: 22px 24px; margin: 20px 0; border-radius: 0px;">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-            <span style="font-size: 20px;">⚠️</span>
-            <span style="font-size: 15px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; color: #FF3B30;">
-                RESNET-50 INFERENCE SERVICE OFFLINE
+    <div style="background: #180A0A; border: 2px solid #FF3B30; border-left: 8px solid #FF3B30; padding: 24px 28px; margin: 16px 0 24px 0; border-radius: 0px;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+            <span style="font-size: 24px;">⚡</span>
+            <span style="font-size: 16px; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase; color: #FF3B30;">
+                RESNET-50 INFERENCE ENGINE OFFLINE (CHECKPOINT REQUIRED)
             </span>
         </div>
-        <p style="font-size: 13px; color: #DDDDDD; line-height: 1.6; margin: 0 0 12px 0;">
-            The authoritative deep-learning model checkpoint was not found on this deployment. In compliance with strict engineering principles, <b>all silent fallbacks to heuristic engines have been eliminated</b>.
+        <p style="font-size: 14px; color: #EEEEEE; line-height: 1.6; margin: 0 0 14px 0;">
+            This deployment on Streamlit Cloud does not have the pre-trained weights checkpoint (<code>model/resnet50_cifake.keras</code>). 
+            In compliance with strict engineering principles, <b>all silent fallbacks to heuristic engines are disabled</b>.
         </p>
-        <div style="font-size: 11px; color: #888888; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
-            INITIALIZE MODEL CHECKPOINT VIA COMMAND LINE:
-        </div>
-        <code style="background: #000000; border: 1px solid #333333; color: #FFC000; padding: 8px 14px; font-family: 'JetBrains Mono', monospace; font-size: 12px; display: block;">
-            python -m src.train --data_dir samples
-        </code>
-        <div style="font-size: 11px; color: #777777; margin-top: 10px;">
+        <p style="font-size: 13px; color: #FFC000; font-weight: 700; margin: 0 0 14px 0;">
+            👇 Click the yellow button below to train and compile the ResNet-50 Two-Stage Transfer Learning engine directly on this instance (~45 seconds).
+        </p>
+        <div style="font-size: 11px; color: #777777;">
             Diagnostic: {err_msg}
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div style="margin: 16px 0;">', unsafe_allow_html=True)
-    if st.button("⚡ INITIALIZE RESNET-50 ENGINE (1-CLICK SETUP)", key="btn_init_model", type="primary"):
-        with st.spinner("TRAINING RESNET-50 TWO-STAGE TRANSFER LEARNING ENGINE ON VERIFICATION SAMPLES... (~45 SECONDS)"):
+    if st.button("⚡ INITIALIZE RESNET-50 ENGINE (1-CLICK SETUP)", key=button_key, type="primary", use_container_width=True):
+        with st.spinner("TRAINING RESNET-50 TWO-STAGE TRANSFER LEARNING ENGINE ON VERIFICATION SAMPLES... PLEASE WAIT ~45 SECONDS."):
             try:
-                from src.train import train_pipeline
-                from src.model import get_inference_service, reset_inference_service
-                train_pipeline(
-                    data_dir="samples",
-                    stage_a_epochs=2,
-                    stage_b_epochs=2,
-                    batch_size=8,
-                    output_path="model/resnet50_cifake.keras"
-                )
-                reset_inference_service()
-                get_inference_service(force_reload=True)
-                st.success("RESNET-50 ENGINE INITIALIZED SUCCESSFULLY! RELOADING...")
+                init_model_on_cloud()
+                st.success("✅ RESNET-50 ENGINE INITIALIZED AND ONLINE! RELOADING DASHBOARD...")
                 st.rerun()
             except Exception as e:
                 st.error(f"INITIALIZATION FAILED: {str(e)}")
-    st.markdown('</div>', unsafe_allow_html=True)
 
 
 def render_sidebar():
     """Render Lamborghini cockpit sidebar navigation and calibration controls."""
-    st.sidebar.markdown("""
+    model_online = False
+    try:
+        service = get_inference_service()
+        model_online = service.is_model_loaded() if service else False
+    except Exception:
+        model_online = False
+
+    status_badge_color = "#34C759" if model_online else "#FF3B30"
+    status_badge_text = "ONLINE" if model_online else "OFFLINE"
+
+    st.sidebar.markdown(f"""
     <div style="background: #121212; border: 1px solid #252525; padding: 16px; border-radius: 0px; text-align: left; margin-bottom: 24px;">
         <span style="font-size: 11px; font-weight: 800; color: #7D7D7D; letter-spacing: 0.15em; text-transform: uppercase;">PROPULSION ENGINE</span><br>
         <span style="font-size: 16px; font-weight: 900; color: #FFFFFF; letter-spacing: 0.05em; text-transform: uppercase;">RESNET-50 ARCHITECTURE</span><br>
-        <span style="font-size: 12px; color: #FFC000; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">BENCHMARK ACCURACY: 92.28%</span>
+        <span style="font-size: 12px; color: {status_badge_color}; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">ENGINE: {status_badge_text}</span>
     </div>
     """, unsafe_allow_html=True)
+
+    if not model_online:
+        if st.sidebar.button("⚡ INITIALIZE ENGINE", key="sidebar_init_model_btn", type="primary", use_container_width=True):
+            with st.spinner("TRAINING RESNET-50 ENGINE ON SAMPLES... (~45S)"):
+                try:
+                    init_model_on_cloud()
+                    st.sidebar.success("ENGINE ONLINE! RELOADING...")
+                    st.rerun()
+                except Exception as e:
+                    st.sidebar.error(f"INIT FAILED: {str(e)}")
 
     st.sidebar.markdown('<p style="font-size: 11px; font-weight: 800; color: #7D7D7D; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 8px;">TELEMETRY MODULES</p>', unsafe_allow_html=True)
     page = st.sidebar.radio(
@@ -695,6 +716,25 @@ def page_detector(threshold: float, show_fft: bool):
     <div class="lambo-hero-subtitle">HIGH-PRECISION FORENSIC CLASSIFICATION SYSTEM FOR AUTONOMOUS SYNTHETIC MEDIA VERIFICATION.</div>
     """, unsafe_allow_html=True)
 
+    # Global check: Is model online? Display prominent alert and 1-click button if missing
+    model_online = False
+    model_err = ""
+    try:
+        service = get_inference_service()
+        model_online = service.is_model_loaded() if service else False
+    except ModelUnavailableError as mue:
+        model_online = False
+        model_err = str(mue)
+    except Exception as e:
+        model_online = False
+        model_err = str(e)
+
+    if not model_online:
+        render_model_offline_alert(
+            model_err or "Trained checkpoint file (model/resnet50_cifake.keras) was not found on this deployment. Click below to initialize.",
+            button_key="detector_top_init_btn"
+        )
+
     col_input, col_results = st.columns([1, 1.25], gap="large")
 
     selected_image = None
@@ -733,7 +773,9 @@ def page_detector(threshold: float, show_fft: bool):
         st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
         st.markdown('<div class="lambo-card-title">02 // FORENSIC TELEMETRY</div>', unsafe_allow_html=True)
 
-        if selected_image is None:
+        if not model_online:
+            st.warning("⚠️ RESNET-50 INFERENCE SERVICE IS OFFLINE. CLICK THE YELLOW INITIALIZATION BUTTON ABOVE OR IN THE SIDEBAR TO ACTIVATE THE ENGINE.")
+        elif selected_image is None:
             st.info("ENGAGE MEDIA INTAKE ON THE LEFT PANEL TO INITIATE MULTI-DOMAIN FORENSIC VERIFICATION.")
         else:
             try:
@@ -741,7 +783,7 @@ def page_detector(threshold: float, show_fft: bool):
                     img_array = np.array(selected_image)
                     result = predict_image(img_array, threshold=threshold)
             except ModelUnavailableError as mue:
-                render_model_offline_alert(str(mue))
+                render_model_offline_alert(str(mue), button_key="detector_result_init_btn")
                 st.markdown('</div>', unsafe_allow_html=True)
                 return
             except Exception as exc:
@@ -1056,6 +1098,25 @@ def page_batch_evaluation(threshold: float):
     <div class="lambo-hero-title">BATCH MEDIA EVALUATOR</div>
     <div class="lambo-hero-subtitle">CONCURRENT MULTI-SPECIMEN FORENSIC EVALUATION WITH INSTANT CSV AUDIT EXPORT.</div>
     """, unsafe_allow_html=True)
+
+    # Check model status globally
+    model_online = False
+    model_err = ""
+    try:
+        service = get_inference_service()
+        model_online = service.is_model_loaded() if service else False
+    except ModelUnavailableError as mue:
+        model_online = False
+        model_err = str(mue)
+    except Exception as e:
+        model_online = False
+        model_err = str(e)
+
+    if not model_online:
+        render_model_offline_alert(
+            model_err or "ResNet-50 checkpoint missing on this deployment. Initialize below to enable batch evaluation.",
+            button_key="batch_top_init_btn"
+        )
 
     st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
     st.markdown('<div class="lambo-card-title">INGEST MEDIA BATCH</div>', unsafe_allow_html=True)
