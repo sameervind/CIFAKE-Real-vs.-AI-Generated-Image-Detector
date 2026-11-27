@@ -1,7 +1,8 @@
 """
 Streamlit Web Dashboard for Real vs. AI-Generated Image Classification.
-Designed with Clean, Minimalist Production UI: Crisp Typography, Subtle Glassmorphism,
-Refined Telemetry, and High-Precision ResNet50 / Spectral Forensics.
+Crafted with the Apple Design System (DESIGN.md) & Aceternity UI Component Architecture.
+Featuring SF Pro Typography (-0.28px tracking), Action Blue (#0066cc) Pill CTAs,
+Aceternity Card Spotlight & Bento Grid, Frosted Vibrancy, and the Signature Product Resting Shadow.
 """
 
 import os
@@ -29,219 +30,233 @@ from src.frequency_analysis import compute_fft_spectrum, extract_artifact_featur
 
 # Streamlit Page Config
 st.set_page_config(
-    page_title="AI vs. Real Image Classifier | CIFAKE ResNet-50",
+    page_title="AI vs. Real Image Classifier | Apple Design & CIFAKE ResNet-50",
     page_icon="🔍",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Clean, Professional Dark UI Styling (No AI slop, no gaudy gradients, clean hierarchy)
+# Apple Design System + Aceternity UI Component Styling (DESIGN.md Reference)
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
+    /* Apple System Font Stack */
     html, body, [class*="css"] {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", system-ui, sans-serif !important;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
     }
 
-    /* Minimalist Dark Graphite Canvas */
+    /* Apple Canvas: Parchment (#f5f5f7) and Pure White (#ffffff) */
     .stApp {
-        background-color: #0b0f17 !important;
-        background-image: 
-            radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 60%),
-            radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px) !important;
-        background-size: 100% 100%, 32px 32px !important;
-        color: #f1f5f9 !important;
+        background-color: #f5f5f7 !important;
+        color: #1d1d1f !important;
     }
 
-    /* Clean Sidebar */
+    /* Apple Frosted Sidebar */
     [data-testid="stSidebar"] {
-        background: #0d121d !important;
-        border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: saturate(180%) blur(20px) !important;
+        border-right: 1px solid #e0e0e0 !important;
     }
 
-    /* Header & Badge */
-    .app-badge {
+    /* Apple Top Bar Badge */
+    .apple-badge {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 4px 10px;
-        border-radius: 6px;
-        background: rgba(99, 102, 241, 0.1);
-        border: 1px solid rgba(99, 102, 241, 0.25);
-        color: #a5b4fc;
-        font-size: 0.75rem;
+        padding: 5px 12px;
+        border-radius: 9999px;
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        color: #0066cc;
+        font-size: 12px;
         font-weight: 600;
-        letter-spacing: 0.03em;
-        text-transform: uppercase;
+        letter-spacing: -0.12px;
         margin-bottom: 12px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     }
 
-    .app-badge-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background-color: #10b981;
+    /* Apple Display Typography with Signature Negative Tracking */
+    .apple-hero-title {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+        font-size: 48px;
+        font-weight: 600;
+        line-height: 1.07;
+        letter-spacing: -0.28px;
+        color: #1d1d1f;
+        margin-bottom: 10px;
     }
 
-    .main-title {
-        font-size: 2.1rem;
-        font-weight: 700;
-        color: #f8fafc;
-        letter-spacing: -0.025em;
-        margin-bottom: 6px;
+    .apple-hero-subtitle {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+        font-size: 21px;
+        font-weight: 400;
+        line-height: 1.35;
+        letter-spacing: -0.2px;
+        color: #7a7a7a;
+        margin-bottom: 32px;
     }
 
-    .main-subtitle {
-        font-size: 0.98rem;
-        color: #94a3b8;
-        line-height: 1.5;
-        margin-bottom: 24px;
+    /* Aceternity Card Spotlight + Apple Store Utility Card ({rounded.lg} = 18px) */
+    .apple-card {
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 18px;
+        padding: 24px;
+        margin-bottom: 20px;
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
     }
 
-    /* Clean Container Cards */
-    .panel-card {
-        background: #111827;
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        border-radius: 12px;
-        padding: 20px;
+    .apple-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.08);
+        border-color: #d2d2d7;
+    }
+
+    .apple-card-title {
+        font-size: 21px;
+        font-weight: 600;
+        color: #1d1d1f;
+        letter-spacing: -0.2px;
         margin-bottom: 16px;
     }
 
-    .panel-title {
-        font-size: 0.95rem;
+    /* The Signature Apple Product Drop-Shadow (DESIGN.md specification) */
+    .product-shadow {
+        box-shadow: rgba(0, 0, 0, 0.18) 0px 8px 30px 0px;
+        border-radius: 18px;
+    }
+
+    /* Apple Verdict Banner - Authentic */
+    .apple-verdict-real {
+        background: #fafafc;
+        border: 1.5px solid #10b981;
+        border-radius: 18px;
+        padding: 24px;
+        text-align: center;
+        margin: 16px 0;
+        box-shadow: 0 4px 20px -2px rgba(16, 185, 129, 0.12);
+    }
+
+    /* Apple Verdict Banner - AI */
+    .apple-verdict-ai {
+        background: #fafafc;
+        border: 1.5px solid #f43f5e;
+        border-radius: 18px;
+        padding: 24px;
+        text-align: center;
+        margin: 16px 0;
+        box-shadow: 0 4px 20px -2px rgba(244, 63, 94, 0.12);
+    }
+
+    .apple-verdict-tag {
+        font-size: 13px;
         font-weight: 600;
-        color: #e2e8f0;
-        letter-spacing: -0.01em;
-        margin-bottom: 14px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    /* Clean Verdict Card - Real */
-    .result-card-real {
-        background: rgba(6, 78, 59, 0.2);
-        border: 1px solid rgba(16, 185, 129, 0.4);
-        border-radius: 10px;
-        padding: 18px 20px;
-        margin: 12px 0 16px 0;
-    }
-
-    /* Clean Verdict Card - AI */
-    .result-card-ai {
-        background: rgba(136, 19, 55, 0.2);
-        border: 1px solid rgba(244, 63, 94, 0.4);
-        border-radius: 10px;
-        padding: 18px 20px;
-        margin: 12px 0 16px 0;
-    }
-
-    .verdict-header-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
         margin-bottom: 6px;
     }
+    .tag-real { color: #059669; }
+    .tag-ai { color: #e11d48; }
 
-    .verdict-pill-real {
-        font-size: 0.72rem;
+    .apple-verdict-headline {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+        font-size: 34px;
         font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #34d399;
-        background: rgba(16, 185, 129, 0.15);
-        padding: 2px 8px;
-        border-radius: 4px;
-        border: 1px solid rgba(16, 185, 129, 0.3);
+        letter-spacing: -0.37px;
+        line-height: 1.15;
+        margin: 4px 0 8px 0;
     }
+    .headline-real { color: #065f46; }
+    .headline-ai { color: #9f1239; }
 
-    .verdict-pill-ai {
-        font-size: 0.72rem;
+    .apple-verdict-sub {
+        font-size: 15px;
+        color: #7a7a7a;
+    }
+    .apple-verdict-sub b {
+        color: #1d1d1f;
         font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #fb7185;
-        background: rgba(244, 63, 94, 0.15);
-        padding: 2px 8px;
-        border-radius: 4px;
-        border: 1px solid rgba(244, 63, 94, 0.3);
     }
 
-    .verdict-main-text {
-        font-size: 1.6rem;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-        margin: 4px 0 6px 0;
-    }
-
-    .verdict-text-real { color: #f0fdf4; }
-    .verdict-text-ai { color: #fff1f2; }
-
-    .verdict-sub-text {
-        font-size: 0.85rem;
-        color: #94a3b8;
-    }
-
-    .verdict-sub-text b {
-        color: #f1f5f9;
-        font-family: 'JetBrains Mono', monospace;
-    }
-
-    /* Metric Tiles */
-    .metric-tile {
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 8px;
-        padding: 12px 10px;
+    /* Aceternity Bento Grid - Apple Telemetry Tiles */
+    .bento-tile {
+        background: #f5f5f7;
+        border: 1px solid #e0e0e0;
+        border-radius: 14px;
+        padding: 16px 12px;
         text-align: center;
+        transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .bento-tile:hover {
+        background: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
     }
 
-    .metric-tile-val {
-        font-size: 1.25rem;
+    .bento-tile-value {
+        font-family: 'JetBrains Mono', -apple-system, monospace;
+        font-size: 20px;
         font-weight: 600;
-        color: #f8fafc;
-        font-family: 'JetBrains Mono', monospace;
+        color: #1d1d1f;
     }
 
-    .metric-tile-lbl {
-        font-size: 0.7rem;
+    .bento-tile-label {
+        font-size: 12px;
         font-weight: 500;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        margin-top: 3px;
+        color: #7a7a7a;
+        letter-spacing: -0.12px;
+        margin-top: 4px;
     }
 
-    /* Diagnostic Note */
-    .diagnostic-box {
-        background: rgba(99, 102, 241, 0.05);
-        border-left: 2px solid #6366f1;
-        padding: 10px 14px;
-        border-radius: 0 6px 6px 0;
-        font-size: 0.88rem;
-        color: #cbd5e1;
-        margin: 12px 0;
+    /* Apple Note Box */
+    .apple-diagnostic-note {
+        background: #f5f5f7;
+        border-left: 3px solid #0066cc;
+        border-radius: 0 10px 10px 0;
+        padding: 12px 16px;
+        font-size: 14px;
+        color: #333333;
         line-height: 1.45;
+        margin: 16px 0;
     }
 
-    /* Streamlit Widget Polishing */
+    /* Action Blue (#0066cc) Primary Pill Buttons with 0.95 scale micro-interaction */
+    button, .stDownloadButton > button {
+        background-color: #0066cc !important;
+        color: #ffffff !important;
+        border-radius: 9999px !important;
+        border: none !important;
+        padding: 10px 22px !important;
+        font-size: 15px !important;
+        font-weight: 400 !important;
+        letter-spacing: -0.2px !important;
+        transition: transform 0.15s ease, background-color 0.15s ease !important;
+    }
+
+    button:hover, .stDownloadButton > button:hover {
+        background-color: #0071e3 !important;
+    }
+
+    button:active, .stDownloadButton > button:active {
+        transform: scale(0.95) !important;
+    }
+
+    /* Apple-styled inputs */
+    .stSelectbox, .stRadio, .stFileUploader {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+    }
+
+    /* Slider Action Blue */
     .stSlider > div > div > div > div {
-        background-color: #6366f1 !important;
+        background-color: #0066cc !important;
     }
     .stProgress > div > div > div > div {
-        background-color: #6366f1 !important;
-    }
-    .stDownloadButton > button {
-        background-color: #6366f1 !important;
-        color: #ffffff !important;
-        border: none !important;
-        font-weight: 500 !important;
-        border-radius: 6px !important;
-        padding: 8px 16px !important;
-    }
-    .stDownloadButton > button:hover {
-        background-color: #4f46e5 !important;
+        background-color: #0066cc !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -268,39 +283,39 @@ def load_metrics_data():
 
 def render_sidebar():
     st.sidebar.markdown("""
-    <div style="background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.25); padding: 8px 12px; border-radius: 6px; text-align: center; font-weight: 600; font-size: 0.8rem; color: #c7d2fe; margin-bottom: 14px;">
-        ResNet-50 · 92.28% Accuracy
+    <div style="background: #ffffff; border: 1px solid #e0e0e0; padding: 10px 14px; border-radius: 12px; text-align: center; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+        <span style="font-size: 13px; font-weight: 600; color: #1d1d1f; letter-spacing: -0.2px;">ResNet-50 Classifier</span><br>
+        <span style="font-size: 12px; color: #0066cc; font-weight: 500;">92.28% Benchmark Accuracy</span>
     </div>
     """, unsafe_allow_html=True)
 
-    st.sidebar.markdown('<p style="color: #64748b; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px;">NAVIGATION</p>', unsafe_allow_html=True)
+    st.sidebar.markdown('<p style="font-size: 11px; font-weight: 600; color: #7a7a7a; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">EXPERIENCE</p>', unsafe_allow_html=True)
     page = st.sidebar.radio(
-        "Module Selection:",
-        ["Detector", "Frequency Studio", "Model & Benchmarks", "Batch Evaluation", "About CIFAKE"],
+        "Navigation",
+        ["Image Detector", "Frequency Studio", "Model Benchmarks", "Batch Evaluation", "About CIFAKE"],
         index=0,
         label_visibility="collapsed"
     )
 
     st.sidebar.markdown("---")
-    st.sidebar.markdown('<p style="color: #64748b; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px;">SETTINGS</p>', unsafe_allow_html=True)
+    st.sidebar.markdown('<p style="font-size: 11px; font-weight: 600; color: #7a7a7a; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">CONTROLS</p>', unsafe_allow_html=True)
     threshold = st.sidebar.slider(
         "Decision Threshold",
         min_value=0.1,
         max_value=0.9,
         value=0.5,
         step=0.05,
-        help="Probability threshold for REAL classification (default: 0.50). Images with P(Real) >= threshold are classified as Real."
+        help="Decision boundary for authentic classification (default: 0.50). Values >= threshold are classified as Real."
     )
-    show_fft = st.sidebar.checkbox("Show 2D Fourier Spectrum", value=True)
+    show_fft = st.sidebar.checkbox("Compute 2D Fourier Spectrum", value=True)
 
     st.sidebar.markdown("---")
     st.sidebar.markdown("""
-    <div style="font-size: 0.78rem; color: #64748b; line-height: 1.5;">
-        <span style="color: #94a3b8; font-weight: 600;">System Specs:</span><br>
-        Architecture: ResNet-50 Transfer Learning<br>
-        Dataset: CIFAKE (120,000 images)<br>
-        Analysis: 2D FFT & Multi-Scale Forensics<br>
-        Backend: NumPy / SciPy / OpenCV
+    <div style="font-size: 12px; color: #7a7a7a; line-height: 1.5; padding: 6px 2px;">
+        <b style="color: #1d1d1f;">Design System:</b> Apple Design Reference (DESIGN.md)<br>
+        <b style="color: #1d1d1f;">Components:</b> Aceternity Bento & Spotlight<br>
+        <b style="color: #1d1d1f;">Typography:</b> SF Pro Display / SF Pro Text<br>
+        <b style="color: #1d1d1f;">Color Accent:</b> Action Blue (#0066cc)
     </div>
     """, unsafe_allow_html=True)
     return page, threshold, show_fft
@@ -308,37 +323,37 @@ def render_sidebar():
 
 def page_detector(threshold: float, show_fft: bool):
     st.markdown("""
-    <div class="app-badge">
-        <span class="app-badge-dot"></span> CIFAKE Detector · ResNet-50
+    <div class="apple-badge">
+        <span>CIFAKE Benchmark · ResNet-50</span>
     </div>
-    <div class="main-title">AI vs. Real Image Classifier</div>
-    <div class="main-subtitle">Upload any image to verify whether it is an authentic camera photograph or generated by AI.</div>
+    <div class="apple-hero-title">AI vs. Real Image Classifier</div>
+    <div class="apple-hero-subtitle">Authentic photographic verification powered by deep residual transfer learning and 2D Fourier frequency analysis.</div>
     """, unsafe_allow_html=True)
 
-    col_input, col_results = st.columns([1, 1.2], gap="large")
+    col_input, col_results = st.columns([1, 1.25], gap="large")
 
     selected_image = None
     image_source_name = "Uploaded Image"
 
     with col_input:
-        st.markdown('<div class="panel-card">', unsafe_allow_html=True)
-        st.markdown('<div class="panel-title">1. Input Image</div>', unsafe_allow_html=True)
-        input_mode = st.radio("Input Source:", ["Upload Image", "Sample Gallery"], horizontal=True, label_visibility="collapsed")
+        st.markdown('<div class="apple-card">', unsafe_allow_html=True)
+        st.markdown('<div class="apple-card-title">1. Source Image</div>', unsafe_allow_html=True)
+        input_mode = st.radio("Source Mode:", ["Upload Photo", "Sample Library"], horizontal=True, label_visibility="collapsed")
 
-        if input_mode == "Upload Image":
-            uploaded_file = st.file_uploader("Upload an image (PNG, JPG, WEBP)", type=["png", "jpg", "jpeg", "webp"])
+        if input_mode == "Upload Photo":
+            uploaded_file = st.file_uploader("Select an image (PNG, JPG, WEBP)", type=["png", "jpg", "jpeg", "webp"])
             if uploaded_file is not None:
                 selected_image = Image.open(uploaded_file).convert("RGB")
                 image_source_name = uploaded_file.name
         else:
-            sample_category = st.selectbox("Category:", ["Real Photos (CIFAR-10)", "AI-Generated (Stable Diffusion)"])
+            sample_category = st.selectbox("Category:", ["Real Photographs (CIFAR-10)", "Synthetic Media (Stable Diffusion)"])
             sample_folder = SAMPLES_REAL if "Real" in sample_category else SAMPLES_AI
 
             if sample_folder.exists():
                 sample_files = sorted(list(sample_folder.glob("*.jpg")) + list(sample_folder.glob("*.png")))
                 if sample_files:
                     sample_options = [f.name for f in sample_files]
-                    selected_sample_name = st.selectbox("Select Image:", sample_options)
+                    selected_sample_name = st.selectbox("Select Sample:", sample_options)
                     selected_file_path = sample_folder / selected_sample_name
                     selected_image = Image.open(selected_file_path).convert("RGB")
                     image_source_name = selected_sample_name
@@ -346,17 +361,18 @@ def page_detector(threshold: float, show_fft: bool):
                 st.warning("Samples directory not found.")
 
         if selected_image is not None:
-            st.image(selected_image, caption=f"{image_source_name} ({selected_image.size[0]}×{selected_image.size[1]} px)", use_container_width=True)
+            # Apple resting product shadow applied
+            st.image(selected_image, caption=f"{image_source_name} ({selected_image.size[0]} × {selected_image.size[1]} px)", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col_results:
-        st.markdown('<div class="panel-card">', unsafe_allow_html=True)
-        st.markdown('<div class="panel-title">2. Classification Results</div>', unsafe_allow_html=True)
+        st.markdown('<div class="apple-card">', unsafe_allow_html=True)
+        st.markdown('<div class="apple-card-title">2. Analysis & Diagnostics</div>', unsafe_allow_html=True)
 
         if selected_image is None:
-            st.info("Upload an image or select a sample from the gallery on the left to begin classification.")
+            st.info("Upload an image on the left or choose from the sample library to run verification.")
         else:
-            with st.spinner("Analyzing image features and frequency spectrum..."):
+            with st.spinner("Analyzing optical noise and spectral harmonics..."):
                 img_array = np.array(selected_image)
                 result = predict_image(img_array, threshold=threshold)
 
@@ -366,98 +382,92 @@ def page_detector(threshold: float, show_fft: bool):
             p_ai = result["probabilities"]["AI"]
             latency = result["processing_time_ms"]
 
-            # Clean, refined verdict display
+            # Apple Style Clean Verdict Card
             if is_real:
                 st.markdown(f"""
-                <div class="result-card-real">
-                    <div class="verdict-header-row">
-                        <span class="verdict-pill-real">Authentic Media</span>
-                        <span style="font-size: 0.8rem; color: #34d399; font-family: 'JetBrains Mono', monospace;">P(Real) = {p_real * 100:.1f}%</span>
-                    </div>
-                    <div class="verdict-main-text verdict-text-real">Real Photograph</div>
-                    <div class="verdict-sub-text">Confidence: <b>{conf * 100:.1f}%</b> · Latency: <b>{latency} ms</b></div>
+                <div class="apple-verdict-real">
+                    <div class="apple-verdict-tag tag-real">Authentic Media Verification</div>
+                    <div class="apple-verdict-headline headline-real">Real Photograph</div>
+                    <div class="apple-verdict-sub">Confidence: <b>{conf * 100:.1f}%</b> &nbsp;·&nbsp; Latency: <b>{latency} ms</b></div>
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown(f"""
-                <div class="result-card-ai">
-                    <div class="verdict-header-row">
-                        <span class="verdict-pill-ai">Synthetic Media</span>
-                        <span style="font-size: 0.8rem; color: #fb7185; font-family: 'JetBrains Mono', monospace;">P(AI) = {p_ai * 100:.1f}%</span>
-                    </div>
-                    <div class="verdict-main-text verdict-text-ai">AI-Generated Image</div>
-                    <div class="verdict-sub-text">Confidence: <b>{conf * 100:.1f}%</b> · Latency: <b>{latency} ms</b></div>
+                <div class="apple-verdict-ai">
+                    <div class="apple-verdict-tag tag-ai">Synthetic Media Detected</div>
+                    <div class="apple-verdict-headline headline-ai">AI-Generated Image</div>
+                    <div class="apple-verdict-sub">Confidence: <b>{conf * 100:.1f}%</b> &nbsp;·&nbsp; Latency: <b>{latency} ms</b></div>
                 </div>
                 """, unsafe_allow_html=True)
 
-            # Clean Probability Distribution
-            st.markdown('<p style="color: #64748b; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin: 12px 0 6px 0;">PROBABILITY DISTRIBUTION</p>', unsafe_allow_html=True)
-            c_bar1, c_bar2 = st.columns(2)
-            with c_bar1:
+            # Apple Probability Bars
+            st.markdown('<p style="font-size: 12px; font-weight: 600; color: #7a7a7a; text-transform: uppercase; letter-spacing: 0.04em; margin: 16px 0 6px 0;">PROBABILITY DISTRIBUTION</p>', unsafe_allow_html=True)
+            b1, b2 = st.columns(2)
+            with b1:
                 st.metric("P(Real Image)", f"{p_real * 100:.2f}%")
                 st.progress(p_real)
-            with c_bar2:
+            with b2:
                 st.metric("P(AI-Generated)", f"{p_ai * 100:.2f}%")
                 st.progress(p_ai)
 
-            # Diagnostic Explanation
+            # Apple Diagnostic Note
             st.markdown(f"""
-            <div class="diagnostic-box">
-                <span style="color: #a5b4fc; font-weight: 600;">Analysis Note:</span> {result["explanation"]}
+            <div class="apple-diagnostic-note">
+                <b style="color: #0066cc;">Diagnostic Finding:</b> {result["explanation"]}
             </div>
             """, unsafe_allow_html=True)
 
-            # Clean Metric Tiles
-            st.markdown('<p style="color: #64748b; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin: 14px 0 6px 0;">ARTIFACT METRICS</p>', unsafe_allow_html=True)
+            # Aceternity Bento Grid - Apple Telemetry Tiles
+            st.markdown('<p style="font-size: 12px; font-weight: 600; color: #7a7a7a; text-transform: uppercase; letter-spacing: 0.04em; margin: 16px 0 8px 0;">SPECTRAL & SPATIAL TELEMETRY</p>', unsafe_allow_html=True)
             t1, t2, t3, t4 = st.columns(4)
             with t1:
                 st.markdown(f"""
-                <div class="metric-tile">
-                    <div class="metric-tile-val">{result['artifacts'].get('spectral_peak_ratio', 1.0):.1f}x</div>
-                    <div class="metric-tile-lbl">Peak Ratio</div>
+                <div class="bento-tile">
+                    <div class="bento-tile-value">{result['artifacts'].get('spectral_peak_ratio', 1.0):.1f}x</div>
+                    <div class="bento-tile-label">Peak Ratio</div>
                 </div>
                 """, unsafe_allow_html=True)
             with t2:
                 st.markdown(f"""
-                <div class="metric-tile">
-                    <div class="metric-tile-val">{result['artifacts'].get('laplacian_kurtosis', 3.0):.1f}</div>
-                    <div class="metric-tile-lbl">Kurtosis</div>
+                <div class="bento-tile">
+                    <div class="bento-tile-value">{result['artifacts'].get('laplacian_kurtosis', 3.0):.1f}</div>
+                    <div class="bento-tile-label">Kurtosis</div>
                 </div>
                 """, unsafe_allow_html=True)
             with t3:
                 st.markdown(f"""
-                <div class="metric-tile">
-                    <div class="metric-tile-val">{result['artifacts'].get('noise_residual_std', 5.0):.2f}</div>
-                    <div class="metric-tile-lbl">Sensor Noise</div>
+                <div class="bento-tile">
+                    <div class="bento-tile-value">{result['artifacts'].get('noise_residual_std', 5.0):.2f}</div>
+                    <div class="bento-tile-label">Sensor Noise</div>
                 </div>
                 """, unsafe_allow_html=True)
             with t4:
                 st.markdown(f"""
-                <div class="metric-tile">
-                    <div class="metric-tile-val">{result['artifacts'].get('high_to_low_ratio', 0.0):.3f}</div>
-                    <div class="metric-tile-lbl">High/Low Ratio</div>
+                <div class="bento-tile">
+                    <div class="bento-tile-value">{result['artifacts'].get('high_to_low_ratio', 0.0):.3f}</div>
+                    <div class="bento-tile-label">Spectral Ratio</div>
                 </div>
                 """, unsafe_allow_html=True)
 
-            # Optional Fourier Magnitude Plot
+            # 2D Fourier Magnitude
             if show_fft:
                 st.markdown("---")
-                st.markdown('<p style="color: #64748b; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">2D FOURIER SPECTRUM</p>', unsafe_allow_html=True)
+                st.markdown('<p style="font-size: 12px; font-weight: 600; color: #7a7a7a; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px;">2D FOURIER SPECTRUM ANALYSIS</p>', unsafe_allow_html=True)
                 spec = result["spectrum_2d"]
 
                 f1, f2 = st.columns(2)
                 with f1:
-                    st.image(selected_image.resize((256, 256)), caption="Resized Image", use_container_width=True)
+                    st.image(selected_image.resize((256, 256)), caption="Analysis Resolution", use_container_width=True)
                 with f2:
                     fig, ax = plt.subplots(figsize=(3.5, 3.5), dpi=120)
-                    fig.patch.set_facecolor('#0d121d')
-                    ax.set_facecolor('#0d121d')
+                    fig.patch.set_facecolor('#ffffff')
+                    ax.set_facecolor('#ffffff')
                     im = ax.imshow(spec, cmap="inferno")
-                    ax.set_title("2D Magnitude Spectrum", fontsize=8, color="#cbd5e1")
+                    ax.set_title("2D Magnitude Spectrum", fontsize=8, color="#1d1d1f")
                     ax.axis("off")
                     cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-                    cbar.ax.yaxis.set_tick_params(color='#64748b')
-                    plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='#64748b', fontsize=7)
+                    cbar.ax.yaxis.set_tick_params(color='#7a7a7a')
+                    plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='#7a7a7a', fontsize=7)
                     st.pyplot(fig)
                     plt.close()
 
@@ -466,26 +476,27 @@ def page_detector(threshold: float, show_fft: bool):
 
 def page_frequency_studio():
     st.markdown("""
-    <div class="app-badge">
-        <span class="app-badge-dot"></span> Frequency Domain Analysis
+    <div class="apple-badge">
+        <span>2D Fourier Frequency Forensics</span>
     </div>
-    <div class="main-title">2D Fourier Spectrum Studio</div>
-    <div class="main-subtitle">Inspect frequency domain artifacts, deconvolution checkerboard spikes, and radial power decay.</div>
+    <div class="apple-hero-title">Spectral Analysis Studio</div>
+    <div class="apple-hero-subtitle">Observe generative neural transposed-convolution checkerboard spikes vs. physical 1/f optical MTF lens decay.</div>
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    <div class="panel-card" style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.6;">
-        <span style="color: #f8fafc; font-weight: 600;">How Frequency Forensics Works:</span><br>
+    <div class="apple-card" style="font-size: 15px; color: #333333; line-height: 1.55;">
+        <span style="font-weight: 600; color: #1d1d1f;">The Science of Frequency Domain Forensics:</span><br>
         Generative models (GANs and Latent Diffusion models like Stable Diffusion) upscale feature maps using transposed convolutions 
-        or interpolation. This creates subtle periodic grid artifacts in the spatial domain that manifest as distinct <b>off-axis peaks in 2D Fourier space</b>. 
-        Natural camera images, in contrast, adhere to optical diffraction laws where spectral power decays smoothly according to a <b>1/f² power law</b>.
+        or bilinear interpolation. This mathematical operation introduces <b>periodic grid harmonics</b> that appear as 
+        symmetrical off-axis delta spikes in 2D Discrete Fourier space. Real camera lenses, by contrast, follow physical optics: 
+        azimuthal power spectral density naturally decays monotonically according to the <b>1/f² power law</b>.
     </div>
     """, unsafe_allow_html=True)
 
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown('<div class="panel-card">', unsafe_allow_html=True)
-        st.markdown('<div class="panel-title">Authentic CIFAR-10 Sample</div>', unsafe_allow_html=True)
+        st.markdown('<div class="apple-card">', unsafe_allow_html=True)
+        st.markdown('<div class="apple-card-title">Authentic CIFAR-10 Sample</div>', unsafe_allow_html=True)
         real_sample = SAMPLES_REAL / "01_real_airplane.jpg"
         if real_sample.exists():
             img_real = Image.open(real_sample).convert("RGB")
@@ -493,18 +504,18 @@ def page_frequency_studio():
             res_real = predict_image(np.array(img_real))
 
             fig, ax = plt.subplots(figsize=(4, 4), dpi=120)
-            fig.patch.set_facecolor('#0d121d')
-            ax.set_facecolor('#0d121d')
+            fig.patch.set_facecolor('#ffffff')
+            ax.set_facecolor('#ffffff')
             ax.imshow(res_real["spectrum_2d"], cmap="viridis")
-            ax.set_title("Natural 1/f Smooth Spectrum", fontsize=9, color="#cbd5e1")
+            ax.set_title("Natural 1/f Smooth Decay Spectrum", fontsize=9, color="#1d1d1f")
             ax.axis("off")
             st.pyplot(fig)
             plt.close()
         st.markdown('</div>', unsafe_allow_html=True)
 
     with c2:
-        st.markdown('<div class="panel-card">', unsafe_allow_html=True)
-        st.markdown('<div class="panel-title">Synthetic AI Sample (Stable Diffusion)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="apple-card">', unsafe_allow_html=True)
+        st.markdown('<div class="apple-card-title">Synthetic AI Sample (Stable Diffusion)</div>', unsafe_allow_html=True)
         ai_sample = SAMPLES_AI / "01_ai_hyperrealistic_cyberpunk_neon_car.jpg"
         if ai_sample.exists():
             img_ai = Image.open(ai_sample).convert("RGB")
@@ -512,10 +523,10 @@ def page_frequency_studio():
             res_ai = predict_image(np.array(img_ai))
 
             fig, ax = plt.subplots(figsize=(4, 4), dpi=120)
-            fig.patch.set_facecolor('#0d121d')
-            ax.set_facecolor('#0d121d')
+            fig.patch.set_facecolor('#ffffff')
+            ax.set_facecolor('#ffffff')
             ax.imshow(res_ai["spectrum_2d"], cmap="inferno")
-            ax.set_title("Periodic Harmonic Spikes", fontsize=9, color="#cbd5e1")
+            ax.set_title("Synthetic Spectrum (Periodic Harmonics)", fontsize=9, color="#1d1d1f")
             ax.axis("off")
             st.pyplot(fig)
             plt.close()
@@ -524,43 +535,43 @@ def page_frequency_studio():
 
 def page_architecture():
     st.markdown("""
-    <div class="app-badge">
-        <span class="app-badge-dot"></span> Performance & Evaluation
+    <div class="apple-badge">
+        <span>ResNet-50 Architecture</span>
     </div>
-    <div class="main-title">ResNet-50 Model & Benchmarks</div>
-    <div class="main-subtitle">Validation metrics on 12,000 CIFAKE test set images matching the project notebook report.</div>
+    <div class="apple-hero-title">Model Specifications & Benchmarks</div>
+    <div class="apple-hero-subtitle">Evaluation on 12,000 CIFAKE test benchmark images matching the original project report.</div>
     """, unsafe_allow_html=True)
 
     metrics = load_metrics_data()
 
-    # Metric Cards
+    # 4 Key Apple Metric Tiles
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         st.markdown(f"""
-        <div class="panel-card" style="text-align: center; padding: 16px;">
-            <div style="font-size: 1.6rem; font-weight: 700; color: #f8fafc; font-family: 'JetBrains Mono', monospace;">{metrics['accuracy'] * 100:.2f}%</div>
-            <div style="font-size: 0.72rem; color: #64748b; text-transform: uppercase; font-weight: 600; margin-top: 4px;">Test Accuracy</div>
+        <div class="apple-card" style="text-align: center; padding: 20px;">
+            <div style="font-size: 32px; font-weight: 600; color: #1d1d1f; font-family: 'JetBrains Mono', monospace;">{metrics['accuracy'] * 100:.2f}%</div>
+            <div style="font-size: 13px; color: #7a7a7a; font-weight: 500; margin-top: 4px;">Test Accuracy</div>
         </div>
         """, unsafe_allow_html=True)
     with c2:
         st.markdown(f"""
-        <div class="panel-card" style="text-align: center; padding: 16px;">
-            <div style="font-size: 1.6rem; font-weight: 700; color: #f8fafc; font-family: 'JetBrains Mono', monospace;">{metrics['precision_macro'] * 100:.2f}%</div>
-            <div style="font-size: 0.72rem; color: #64748b; text-transform: uppercase; font-weight: 600; margin-top: 4px;">Precision (Macro)</div>
+        <div class="apple-card" style="text-align: center; padding: 20px;">
+            <div style="font-size: 32px; font-weight: 600; color: #1d1d1f; font-family: 'JetBrains Mono', monospace;">{metrics['precision_macro'] * 100:.2f}%</div>
+            <div style="font-size: 13px; color: #7a7a7a; font-weight: 500; margin-top: 4px;">Precision (Macro)</div>
         </div>
         """, unsafe_allow_html=True)
     with c3:
         st.markdown(f"""
-        <div class="panel-card" style="text-align: center; padding: 16px;">
-            <div style="font-size: 1.6rem; font-weight: 700; color: #f8fafc; font-family: 'JetBrains Mono', monospace;">{metrics['recall_macro'] * 100:.2f}%</div>
-            <div style="font-size: 0.72rem; color: #64748b; text-transform: uppercase; font-weight: 600; margin-top: 4px;">Recall (Macro)</div>
+        <div class="apple-card" style="text-align: center; padding: 20px;">
+            <div style="font-size: 32px; font-weight: 600; color: #1d1d1f; font-family: 'JetBrains Mono', monospace;">{metrics['recall_macro'] * 100:.2f}%</div>
+            <div style="font-size: 13px; color: #7a7a7a; font-weight: 500; margin-top: 4px;">Recall (Macro)</div>
         </div>
         """, unsafe_allow_html=True)
     with c4:
         st.markdown(f"""
-        <div class="panel-card" style="text-align: center; padding: 16px;">
-            <div style="font-size: 1.6rem; font-weight: 700; color: #f8fafc; font-family: 'JetBrains Mono', monospace;">{metrics['f1_macro'] * 100:.2f}%</div>
-            <div style="font-size: 0.72rem; color: #64748b; text-transform: uppercase; font-weight: 600; margin-top: 4px;">F1-Score</div>
+        <div class="apple-card" style="text-align: center; padding: 20px;">
+            <div style="font-size: 32px; font-weight: 600; color: #1d1d1f; font-family: 'JetBrains Mono', monospace;">{metrics['f1_macro'] * 100:.2f}%</div>
+            <div style="font-size: 13px; color: #7a7a7a; font-weight: 500; margin-top: 4px;">F1-Score</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -568,8 +579,8 @@ def page_architecture():
 
     col_chart1, col_chart2 = st.columns(2)
     with col_chart1:
-        st.markdown('<div class="panel-card">', unsafe_allow_html=True)
-        st.markdown('<div class="panel-title">Confusion Matrix (12,000 Test Images)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="apple-card">', unsafe_allow_html=True)
+        st.markdown('<div class="apple-card-title">Confusion Matrix (12,000 Test Images)</div>', unsafe_allow_html=True)
         cm_path = ASSETS_DIR / "confusion_matrix.png"
         if cm_path.exists():
             st.image(str(cm_path), use_container_width=True)
@@ -578,8 +589,8 @@ def page_architecture():
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col_chart2:
-        st.markdown('<div class="panel-card">', unsafe_allow_html=True)
-        st.markdown('<div class="panel-title">Training & Validation Loss / Accuracy</div>', unsafe_allow_html=True)
+        st.markdown('<div class="apple-card">', unsafe_allow_html=True)
+        st.markdown('<div class="apple-card-title">Training & Validation Loss / Accuracy</div>', unsafe_allow_html=True)
         curves_path = ASSETS_DIR / "accuracy_loss_curves.png"
         if curves_path.exists():
             st.image(str(curves_path), use_container_width=True)
@@ -587,8 +598,8 @@ def page_architecture():
             st.info("Curves available in assets.")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="panel-card">', unsafe_allow_html=True)
-    st.markdown('<div class="panel-title">Classification Performance Table</div>', unsafe_allow_html=True)
+    st.markdown('<div class="apple-card">', unsafe_allow_html=True)
+    st.markdown('<div class="apple-card-title">Classification Performance Report</div>', unsafe_allow_html=True)
     df_metrics = pd.DataFrame({
         "Class": ["AI (Synthetic)", "REAL (CIFAR-10)", "Macro Average", "Weighted Average"],
         "Precision": ["89.80%", "95.09%", "92.42%", "92.45%"],
@@ -599,8 +610,8 @@ def page_architecture():
     st.table(df_metrics)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="panel-card">', unsafe_allow_html=True)
-    st.markdown('<div class="panel-title">Model Architecture Summary</div>', unsafe_allow_html=True)
+    st.markdown('<div class="apple-card">', unsafe_allow_html=True)
+    st.markdown('<div class="apple-card-title">ResNet-50 Sequential Architecture</div>', unsafe_allow_html=True)
     st.code("""
 Model: "sequential_resnet50_cifake"
 _________________________________________________________________
@@ -631,14 +642,15 @@ Optimization Configuration:
 
 def page_batch_evaluation(threshold: float):
     st.markdown("""
-    <div class="app-badge">
-        <span class="app-badge-dot"></span> Batch Processing
+    <div class="apple-badge">
+        <span>Batch Evaluation Pipeline</span>
     </div>
-    <div class="main-title">Batch Media Evaluator</div>
-    <div class="main-subtitle">Upload multiple images at once to generate a summary report and export results as CSV.</div>
+    <div class="apple-hero-title">Batch Media Evaluator</div>
+    <div class="apple-hero-subtitle">Upload multiple images concurrently to generate a forensic audit report and export results as CSV.</div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="panel-card">', unsafe_allow_html=True)
+    st.markdown('<div class="apple-card">', unsafe_allow_html=True)
+    st.markdown('<div class="apple-card-title">Ingest Media Batch</div>', unsafe_allow_html=True)
     uploaded_files = st.file_uploader("Select images to analyze:", type=["png", "jpg", "jpeg", "webp"], accept_multiple_files=True)
 
     if uploaded_files:
@@ -691,16 +703,16 @@ def page_batch_evaluation(threshold: float):
 
 def page_about():
     st.markdown("""
-    <div class="app-badge">
-        <span class="app-badge-dot"></span> Documentation
+    <div class="apple-badge">
+        <span>Research & Dataset</span>
     </div>
-    <div class="main-title">About the CIFAKE Project</div>
-    <div class="main-subtitle">Benchmark dataset and methodology for synthetic image detection.</div>
+    <div class="apple-hero-title">About the CIFAKE Project</div>
+    <div class="apple-hero-subtitle">Open-source forensic research for distinguishing synthetic media from camera photography.</div>
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    <div class="panel-card" style="line-height: 1.6; color: #cbd5e1; font-size: 0.92rem;">
-        <h4 style="color: #f8fafc; margin-top: 0;">Project Background</h4>
+    <div class="apple-card" style="line-height: 1.6; color: #333333; font-size: 15px;">
+        <h4 style="color: #1d1d1f; margin-top: 0; font-size: 21px;">Project Background</h4>
         <p>
         As generative diffusion models (Stable Diffusion, Midjourney, DALL-E) become increasingly photorealistic, 
         verifiable authentication of digital media is essential to combat synthetic misinformation. 
@@ -708,14 +720,14 @@ def page_about():
         camera optics and generative noise signatures.
         </p>
 
-        <h4 style="color: #f8fafc; margin-top: 18px;">CIFAKE Dataset</h4>
+        <h4 style="color: #1d1d1f; margin-top: 24px; font-size: 21px;">CIFAKE Dataset</h4>
         <p>
         • <b>60,000 Real Images</b>: CIFAR-10 photographic benchmark across 10 classes.<br>
         • <b>60,000 Synthetic Images</b>: Generated with Stable Diffusion 1.4 using matched semantic prompts.<br>
         • <b>Data Split</b>: 100,000 training images (50k Real, 50k Fake) and 20,000 test images (10k Real, 10k Fake).
         </p>
 
-        <h4 style="color: #f8fafc; margin-top: 18px;">Forensic Detection Methodology</h4>
+        <h4 style="color: #1d1d1f; margin-top: 24px; font-size: 21px;">Forensic Detection Methodology</h4>
         <p>
         1. <b>Flat-Region Sensor Noise Estimation</b>: Measures physical Poisson-Gaussian shot noise in smooth areas to avoid edge aliasing false positives.<br>
         2. <b>Color Channel Cross-Correlation</b>: Validates physical Bayer demosaicing optical coupling between color channels.<br>
@@ -727,11 +739,11 @@ def page_about():
 
 def main():
     page, threshold, show_fft = render_sidebar()
-    if page == "Detector":
+    if page == "Image Detector":
         page_detector(threshold, show_fft)
     elif page == "Frequency Studio":
         page_frequency_studio()
-    elif page == "Model & Benchmarks":
+    elif page == "Model Benchmarks":
         page_architecture()
     elif page == "Batch Evaluation":
         page_batch_evaluation(threshold)
