@@ -232,7 +232,7 @@ def page_live_detector(threshold: float, show_fft: bool):
                 st.metric(
                     "Gradient Kurtosis",
                     f"{result['artifacts'].get('laplacian_kurtosis', 3.0):.2f}",
-                    help="Measures synthetic smoothing + sharp edge tail (>5.0 indicates AI airbrushing; ~3.0 is natural)."
+                    help="Measures gradient distribution kurtosis. Natural scenes with depth of field have heavy-tailed kurtosis (>5.0); isotropic texture ~3.0."
                 )
             with m_col3:
                 st.metric(

@@ -92,3 +92,34 @@ def test_calculate_metrics():
     assert "confusion_matrix" in metrics
     assert "roc_auc" in metrics
     assert 0.0 <= metrics["accuracy"] <= 1.0
+
+
+def test_real_photos_not_falsely_flagged():
+    """Verify that real photos (daylight, bokeh, low light, compressed) are classified as REAL."""
+    import cv2
+    
+    # 1. Daylight landscape simulation
+    landscape = np.zeros((400, 600, 3), dtype=np.uint8)
+    landscape[:200, :] = [235, 206, 135]
+    landscape[200:, :] = [34, 139, 34]
+    noise = np.random.normal(0, 3.0, landscape.shape).astype(np.int16)
+    landscape = np.clip(landscape.astype(np.int16) + noise, 0, 255).astype(np.uint8)
+    res_land = predict_image(landscape)
+    assert res_land["label"] == "REAL"
+    assert res_land["probabilities"]["REAL"] > 0.80
+
+    # 2. Portrait bokeh simulation
+    bg = cv2.GaussianBlur(np.random.randint(50, 180, (600, 400, 3), dtype=np.uint8), (51, 51), 0)
+    cv2.circle(bg, (200, 300), 80, (180, 140, 120), -1)
+    res_bokeh = predict_image(bg)
+    assert res_bokeh["label"] == "REAL"
+    assert res_bokeh["probabilities"]["REAL"] > 0.80
+
+    # 3. WhatsApp JPEG compression simulation
+    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 40]
+    _, enc = cv2.imencode('.jpg', landscape, encode_param)
+    wa_img = cv2.imdecode(enc, 1)
+    res_wa = predict_image(cv2.cvtColor(wa_img, cv2.COLOR_BGR2RGB))
+    assert res_wa["label"] == "REAL"
+    assert res_wa["probabilities"]["REAL"] > 0.80
+
