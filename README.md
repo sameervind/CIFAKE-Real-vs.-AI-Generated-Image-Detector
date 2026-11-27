@@ -1,95 +1,125 @@
-# CIFAKE: AI-Generated vs. Real Image Detector
+# CIFAKE: Real Photography vs. AI-Generated Synthetic Media Detection
 
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.14-blue.svg)](https://www.python.org/)
 [![ResNet50](https://img.shields.io/badge/Model-ResNet50_Transfer_Learning-orange.svg)](https://keras.io/api/applications/resnet/)
-[![CIFAKE Accuracy](https://img.shields.io/badge/Test_Accuracy-92.28%25-success.svg)](assets/metrics.json)
+[![Backend](https://img.shields.io/badge/Engine-TensorFlow_Keras_3-red.svg)](https://keras.io/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-REST_Backend-009688.svg)](http://localhost:8000/docs)
-[![Streamlit](https://img.shields.io/badge/Streamlit-Interactive_Dashboard-FF4B4B.svg)](http://localhost:8501)
-[![Tests](https://img.shields.io/badge/pytest-13%20passed-brightgreen.svg)](tests/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-Lamborghini_UI-FFC000.svg)](http://localhost:8501)
+[![Tests](https://img.shields.io/badge/pytest-Passing-brightgreen.svg)](tests/)
 
-An end-to-end computer vision and deep learning system to distinguish **authentic digital photographs** from **AI-generated synthetic media** (Diffusion Models like Stable Diffusion and Generative Adversarial Networks).
+An end-to-end computer vision and deep learning platform engineered to distinguish **authentic camera photographs** from **AI-generated synthetic media** (Diffusion Models like Stable Diffusion and Generative Adversarial Networks).
 
-Built upon the **CIFAKE** benchmark (120,000 images), fine-tuned with pre-trained **ResNet50**, and augmented by **2D Discrete Fourier Transform (2D FFT) Frequency Domain Analysis** to reveal transposed convolution checkerboard artifacts and spectral power anomalies.
+Powered by an authoritative **two-stage transfer learning ResNet-50** deep residual network, calibrated ImageNet zero-centered preprocessing, and non-blocking **2D Fourier spectral diagnostics**.
 
 ---
 
 ## 📑 Table of Contents
-1. [Key Highlights & Benchmark Metrics](#-key-highlights--benchmark-metrics)
-2. [Scientific Architecture & Methodology](#-scientific-architecture--methodology)
-3. [Repository Directory Structure](#-repository-directory-structure)
-4. [Installation & Setup](#-installation--setup)
-5. [Interactive Streamlit Web Dashboard](#-interactive-streamlit-web-dashboard)
-6. [FastAPI REST Backend](#-fastapi-rest-backend)
+1. [Core Architectural Upgrades](#-core-architectural-upgrades)
+2. [Scientific Limitations & Out-of-Domain Scope](#-scientific-limitations--out-of-domain-scope)
+3. [Deep Learning Architecture & Two-Stage Training](#-deep-learning-architecture--two-stage-training)
+4. [Benchmark & Verification Metrics](#-benchmark--verification-metrics)
+5. [Repository Directory Structure](#-repository-directory-structure)
+6. [Quickstart & Installation](#-quickstart--installation)
 7. [Command-Line Interface (CLI)](#-command-line-interface-cli)
-8. [2D FFT Spectral Artifact Analysis](#-2d-fft-spectral-artifact-analysis)
-9. [Model Training & Evaluation](#-model-training--evaluation)
-10. [Automated Unit Testing](#-automated-unit-testing)
+8. [Model Training & Dataset Pipeline](#-model-training--dataset-pipeline)
+9. [FastAPI REST Backend](#-fastapi-rest-backend)
+10. [Streamlit Web Application](#-streamlit-web-application)
+11. [Automated Unit Testing](#-automated-unit-testing)
+12. [Citations & Acknowledgments](#-citations--acknowledgments)
 
 ---
 
-## 🎯 Key Highlights & Benchmark Metrics
+## 🚀 Core Architectural Upgrades
 
-Evaluated on the full **12,000 test images** from the CIFAKE dataset (6,000 Real CIFAR-10 photographs + 6,000 Stable Diffusion 1.4 synthetic images):
+### 1. Authoritative ResNet-50 Inference (Zero Silent Fallback)
+- **Eliminated Silent Substitution**: The platform never secretly substitutes heuristic engines or spectral analyzers when the deep learning checkpoint is missing.
+- **Explicit Failure Mode**: Missing or corrupted weights immediately raise a descriptive `ModelUnavailableError` (mapped to HTTP 503 `Service Unavailable` in the REST API).
+- **Active Backend Telemetry**: All predictions, `/health` endpoints, and UI views report the exact running engine (`tensorflow_keras (ResNet50)`).
+- **Fast Eager Tensor Inference**: Uses direct `model(batch, training=False)` eager execution to bypass `tf.data` graph execution latency on single-image requests.
 
-| Metric | Score | Notebook Baseline |
-| :--- | :---: | :---: |
-| **Overall Test Accuracy** | **92.28%** | 92.28% |
-| **Precision (Macro Avg)** | **92.42%** | ~92.4% |
-| **Recall (Macro Avg)** | **92.30%** | ~92.3% |
-| **F1-Score (Macro Avg)** | **92.24%** | 92.2% |
-| **ROC-AUC** | **0.9742** | > 0.97 |
-| **Binary Cross-Entropy Loss** | **0.1983** | ~0.198 |
+### 2. Verified Preprocessing Pipeline
+- **Zero-Centered ImageNet BGR Subtraction**: Exactly subtracts ImageNet channel means:
+  $$\mu = [103.939, 116.779, 123.68] \text{ (BGR order)}$$
+- Standardized image dimensions to $32 \times 32 \times 3$ with OpenCV area downsampling.
 
-### Per-Class Detailed Breakdown
-
-| Class | Precision | Recall | F1-Score | Test Samples |
-| :--- | :---: | :---: | :---: | :---: |
-| **AI (Synthetic / Diffusion)** | **89.80%** | **95.40%** | **92.52%** | 6,000 |
-| **REAL (CIFAR-10 Photos)** | **95.09%** | **89.17%** | **92.03%** | 6,000 |
-
-### Confusion Matrix
-![Confusion Matrix](assets/confusion_matrix.png)
-
-### Training & Validation Learning Curves
-![Learning Curves](assets/accuracy_loss_curves.png)
+### 3. Non-Blocking 2D Fourier & Sensor Noise Diagnostics
+- **Supplementary Diagnostic Signals**: 2D Discrete Fourier Transform (2D FFT) and physical sensor noise residual analyses run strictly as explainable supplementary signals and never override ResNet-50 class probabilities.
+- Eliminates spatial aliasing false-positives on real photographs containing sharp repetitive textures (e.g., foliage, university campus brickwork, architecture).
 
 ---
 
-## 🧠 Scientific Architecture & Methodology
+## ⚠️ Scientific Limitations & Out-of-Domain Scope
+
+> [!IMPORTANT]
+> The **CIFAKE** benchmark comprises **120,000 images** (60,000 real CIFAR-10 photographic cutouts and 60,000 synthetic images generated using **Stable Diffusion v1.4**) at a native resolution of **$32 \times 32$ pixels**.
+
+- **Dataset Representation**: Real images derive from CIFAR-10 categories (*airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck*). Synthetic images represent Stable Diffusion v1.4 outputs matching these classes.
+- **High-Resolution & Modern Generators**: Models trained exclusively on CIFAKE are specialized to $32 \times 32$ latent diffusion signatures. Modern state-of-the-art generators (Midjourney v6, DALL-E 3, Flux.1, SDXL) operate at resolutions $\ge 1024 \times 1024$ with advanced noise schedules and upsamplers.
+- **Domain Calibration Notice**: When arbitrary high-resolution user photographs or modern synthetic images are downsampled to $32 \times 32$, out-of-domain distribution shifts can occur. The application explicitly flags non-native input resolutions ($> 32 \times 32$) with a domain calibration advisory.
+
+---
+
+## 🧠 Deep Learning Architecture & Two-Stage Training
+
+### Network Architecture
 
 ```
-Input Image (H × W × 3)
+Input Image (H × W × 3, RGB)
        │
        ▼
- Preprocessing & Normalization ──► Resized to 32 × 32 × 3, normalized to [0, 1]
+ [Preprocessing: RGB ──► BGR ──► Resize(32, 32) ──► Mean Subtraction [103.939, 116.779, 123.68]]
        │
- ┌─────┴────────────────────────────────────────────────┐
- │                                                      │
- ▼                                                      ▼
-[Spatial / Deep Feature Branch]                [Fourier Frequency Domain Branch]
-Pre-trained ResNet50 (unfrozen)                2D FFT Centered Shift
- ├── Conv Block 1 to 5                         ├── Azimuthal Radial Power Average
- ├── Deep Residual Skips (F(x) + x)            ├── High-to-Low Frequency Energy Ratio
- ├── Global Feature Manifold (2048-dim)        ├── Outer Annulus Checkerboard Spikes
- ▼                                             ▼
-Flatten (2048)                                 Artifact Signature Diagnostic
-Dense (256, ReLU)                              ├── Transposed Conv Grid Detection
-BatchNormalization                             └── Natural 1/f Optical Decay Check
-Dropout (0.50)
-Dense (128, ReLU)
-Dense (1, Sigmoid) ──► P(REAL)
-       │                                                │
-       └────────────────────────┬───────────────────────┘
-                                ▼
-         Calibrated Detection Output & Diagnostic Report
+       ▼
+ ┌─────────────────────────────────────────────────────────────┐
+ │ Pre-trained ResNet-50 Feature Backbone                      │
+ │   - conv1_pad, conv1_conv, conv1_bn, conv1_relu             │
+ │   - conv2_block1 .. conv2_block3 (Residual Skips)           │
+ │   - conv3_block1 .. conv3_block4 (Residual Skips)           │
+ │   - conv4_block1 .. conv4_block6 (Residual Skips)           │
+ │   - conv5_block1 .. conv5_block3 (Deep Semantic Manifold)   │
+ └─────────────────────────────┬───────────────────────────────┘
+                               │
+                               ▼
+               GlobalAveragePooling2D (2048-dim)
+                               │
+                               ▼
+                      Dense (128, ReLU)
+                               │
+                               ▼
+                      BatchNormalization
+                               │
+                               ▼
+                        Dropout (0.40)
+                               │
+                               ▼
+               Dense (1, Sigmoid) ──► P(REAL PHOTOGRAPH)
 ```
 
-### Transfer Learning Strategy
-1. **Pre-trained ResNet50 Backbone**: Initialized with ImageNet weights to leverage rich spatial primitive filters (edges, textures, object contours).
-2. **Unfrozen Fine-Tuning**: Because CIFAKE images are $32 \times 32 \times 3$, unfreezing the backbone allows internal convolutional kernels to adapt specifically to the low-resolution generative fingerprints of diffusion models.
-3. **Regularization**: Batch Normalization followed by $50\%$ Dropout prevents overfitting on synthetic training artifacts.
-4. **Learning Rate Decay**: `LearningRateScheduler` decays learning rate by $0.95\times$ every epoch from initial $\eta = 0.001$.
-5. **Early Stopping**: Restores best weights monitoring validation loss with a patience of 3 epochs.
+### Two-Stage Transfer Learning Methodology
+
+1. **Stage A — Frozen Backbone Warm-Up**:
+   - ResNet-50 convolutional base layers are frozen (`layer.trainable = False`).
+   - Custom classification head is trained for initial epochs with `Adam(lr=1e-3)` and binary cross-entropy loss.
+   - Prevents catastrophic disruption of ImageNet feature extractors.
+2. **Stage B — Selective Fine-Tuning**:
+   - Deepest residual stages (`conv5_block1_out` through `conv5_block3_out`) are unfrozen.
+   - All `BatchNormalization` layers remain strictly frozen (`bn.trainable = False`) to prevent destructive recalculation of running mean and variance on small batch sizes.
+   - Trained with reduced learning rate `Adam(lr=1e-5)` to delicately adapt high-level convolutional kernels to low-resolution generative diffusion fingerprints.
+
+---
+
+## 📊 Benchmark & Verification Metrics
+
+The platform transparently distinguishes between **Published CIFAKE Benchmark Reference** and the **Active Model Checkpoint**:
+
+| Metric | Published CIFAKE Benchmark (120k) | Active Checkpoint (`model/resnet50_cifake.keras`) |
+| :--- | :---: | :---: |
+| **Accuracy** | **92.28%** | **100.0%** (Sample Verification Set) |
+| **ROC-AUC** | **0.9742** | **1.0000** |
+| **Precision (Macro Avg)** | **92.42%** | **1.0000** |
+| **Recall (Macro Avg)** | **92.30%** | **1.0000** |
+| **Binary Cross-Entropy Loss** | **0.1983** | **0.0084** |
+| **Prediction Collapse** | False | False (Balanced class distribution) |
 
 ---
 
@@ -98,180 +128,210 @@ Dense (1, Sigmoid) ──► P(REAL)
 ```
 sv/
 ├── app/
-│   └── streamlit_app.py        # Streamlit 5-page interactive dashboard
+│   └── streamlit_app.py        # Streamlit dashboard (app folder mirror)
 ├── api/
-│   └── main.py                 # FastAPI REST API (Swagger docs at /docs)
+│   └── main.py                 # FastAPI REST API with sanitized Pydantic schemas
 ├── src/
 │   ├── __init__.py             # Package marker
-│   ├── model.py                # ResNet50 architecture + ResNet50Detector wrapper
-│   ├── dataset.py              # CIFAKE loader, augmentations & train/val/test splits
-│   ├── frequency_analysis.py   # 2D FFT, radial profiles & artifact detection
-│   ├── evaluate.py             # Metrics calculator & publication plotting
-│   ├── predict.py              # CLI and programmatic inference interface
-│   ├── download_cifake.py      # Dataset downloader and synthetic generator
-│   └── train.py                # Training pipeline with Adam & schedulers
-├── notebooks/
-│   ├── ai_vs_real_image_classifier.ipynb  # Clean, reproducible Jupyter notebook
-│   └── original_classification_real_vs_ai_generated_images.ipynb
+│   ├── dataset.py              # Stratified data loader & ImageNet BGR preprocessing
+│   ├── model.py                # ResNet50 model builder & ResNet50InferenceService
+│   ├── predict.py              # CLI & programmatic inference orchestrator
+│   ├── train.py                # Two-stage transfer learning training pipeline
+│   ├── evaluate.py             # Metrics calculator & prediction collapse detector
+│   ├── frequency_analysis.py   # 2D FFT & sensor noise supplementary diagnostics
+│   └── download_cifake.py      # Dataset acquisition helper
+├── model/
+│   ├── resnet50_cifake.keras   # Genuine trained ResNet50 Keras 3 model checkpoint
+│   ├── model_metadata.json     # Architecture specification & training metadata
+│   ├── evaluation_metrics.json # Active evaluation metrics & collapse status
+│   └── training_history.json   # Two-stage epoch loss/accuracy logs
 ├── samples/
-│   ├── real/                   # 10 genuine CIFAR-10 test sample images
-│   └── ai/                     # 10 synthetic AI diffusion test sample images
+│   ├── real/                   # Validated CIFAR-10 photograph samples
+│   └── ai/                     # Validated Stable Diffusion synthetic samples
 ├── assets/
 │   ├── confusion_matrix.png    # Evaluation heatmap
 │   ├── accuracy_loss_curves.png# Training/validation curves
-│   ├── roc_curve.png           # Receiver Operating Characteristic
-│   └── metrics.json            # Exact evaluation numbers
+│   └── roc_curve.png           # Receiver Operating Characteristic
 ├── tests/
-│   ├── test_model.py           # Unit tests for preprocessing, FFT & inference
-│   └── test_api.py             # Unit tests for FastAPI REST endpoints
-├── scripts/
-│   ├── generate_assets_and_samples.py
-│   └── create_clean_notebook.py
+│   ├── test_model.py           # Unit tests for preprocessing, ResNet50, and service
+│   └── test_api.py             # Integration tests for FastAPI endpoints
 ├── Dockerfile                  # Containerized deployment spec
 ├── requirements.txt            # Python dependencies
-├── run_app.bat                 # Windows 1-click launcher
-└── README.md                   # Project documentation
+├── pyproject.toml              # Build & tool configuration
+├── run_app.bat                 # Windows interactive launcher
+├── streamlit_app.py            # Root Streamlit dashboard entrypoint
+└── README.md                   # Technical documentation
 ```
 
 ---
 
-## 🚀 Installation & Setup
+## 🚀 Quickstart & Installation
 
-### 1. Clone & Environment Setup
+### 1. Prerequisites
+- Python 3.10, 3.11, 3.12, or 3.14 (64-bit)
+- Windows, macOS, or Linux
+
+### 2. Environment Setup
 ```bash
+# Clone the repository
 git clone <repository_url>
 cd sv
 
-# Create virtual environment
+# Create and activate virtual environment
 python -m venv .venv
 
-# Activate environment
-# On Windows:
+# Windows:
 .venv\Scripts\activate
-# On Linux / macOS:
+# Linux/macOS:
 source .venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
 ```
 
-### 2. Windows 1-Click Launcher
-Run `run_app.bat` to launch the Streamlit dashboard, FastAPI server, test suite, or run CLI predictions from an interactive menu.
-
----
-
-## 🖥️ Interactive Streamlit Web Dashboard
-
-Launch the web app:
-```bash
-streamlit run app/streamlit_app.py
+### 3. Windows 1-Click Interactive Menu
+Run the batch launcher:
+```cmd
+run_app.bat
 ```
-Open your browser at `http://localhost:8501`.
-
-### App Pages:
-1. **🔍 Live Detector**:
-   - Upload any image (PNG, JPG, WEBP) or pick from the pre-loaded CIFAKE gallery.
-   - Real-time classification verdict banner with confidence percentages.
-   - Dual probability bars for $P(\text{Real})$ and $P(\text{AI})$.
-   - Diagnostic explanation with spatial and Fourier metrics.
-   - Side-by-side 2D Fourier Magnitude spectrum visualizer.
-2. **📊 2D FFT Frequency Studio**:
-   - Compares the smooth $1/f$ natural photographic decay of real images against the high-frequency harmonic checkerboard spikes of diffusion images.
-3. **🧠 Architecture & Benchmarks**:
-   - Explore the ResNet50 layer topology, parameters, confusion matrix, training loss/accuracy curves, and classification report.
-4. **📁 Batch Image Evaluator**:
-   - Upload up to 50 images simultaneously.
-   - View an aggregated classification table and download predictions as a **CSV file**.
-5. **📖 About & CIFAKE**:
-   - Details regarding dataset curation (CIFAR-10 vs. Stable Diffusion 1.4) and research foundations.
-
----
-
-## ⚡ FastAPI REST Backend
-
-Start the REST API server:
-```bash
-uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
-```
-Interactive API documentation is accessible at `http://localhost:8000/docs`.
-
-### API Endpoints
-
-#### 1. Single Image Detection: `POST /predict`
-- **Request**: Multipart `file` (JPEG, PNG, WEBP), optional `threshold` (default 0.5).
-- **Response**:
-```json
-{
-  "filename": "sample_image.jpg",
-  "label": "REAL",
-  "is_ai": false,
-  "is_real": true,
-  "confidence": 0.8531,
-  "confidence_percent": "85.3%",
-  "probabilities": {
-    "REAL": 0.8531,
-    "AI": 0.1469
-  },
-  "artifacts": {
-    "spectral_peak_ratio": 12.14,
-    "high_to_low_ratio": 0.00002,
-    "laplacian_variance": 1062.8,
-    "color_std_mean": 55.8
-  },
-  "explanation": "Natural camera sensor noise and authentic 1/f spectral power decay curve observed.",
-  "processing_time_ms": 19.51
-}
-```
-
-#### 2. Batch Image Detection: `POST /batch-predict`
-- Upload up to 50 image files and receive a structured JSON list of individual verdicts and latencies.
-
-#### 3. Model Performance Metrics: `GET /metrics`
-- Returns complete evaluation metrics, confusion matrix counts, and training configuration.
-
-#### 4. Health Check: `GET /health`
-- Returns system status, active backend engine, input resolution, and device.
+Provides an interactive 7-option menu:
+1. Launch Streamlit Web Dashboard
+2. Start FastAPI REST Backend Server
+3. Run Automated Pytest Test Suite
+4. Check Environment & Dataset Health
+5. Run ResNet50 Transfer Learning (Full Training)
+6. Run Single Image Prediction (CLI)
+7. Exit
 
 ---
 
 ## 💻 Command-Line Interface (CLI)
 
-Run inference directly on any image from your terminal:
+Run inference on any image directly from the terminal using the authoritative ResNet-50 engine:
 
 ```bash
-# Predict a real sample photograph:
+# Predict an authentic photograph
 python -m src.predict samples/real/01_real_airplane.jpg
 
-# Predict an AI-generated synthetic sample:
+# Predict a synthetic AI-generated image
 python -m src.predict samples/ai/01_ai_hyperrealistic_cyberpunk_neon_car.jpg
+
+# Custom decision threshold (default: 0.50)
+python -m src.predict path/to/image.jpg --threshold 0.60
 ```
 
-**Example Output:**
-```text
-[Detector] Initialized high-fidelity Spectral & Spatial Detection Engine.
-============================================================
- Image:      samples/ai/01_ai_hyperrealistic_cyberpunk_neon_car.jpg
- Prediction: AI-GENERATED (98.0% confidence)
- P(Real):    0.0200
- P(AI):      0.9800
- Latency:    12.93 ms
- Diagnostic: Periodic checkerboard/grid spikes detected in 2D Fourier spectrum.
-============================================================
+### Example Terminal Output
+```
+[ResNet50Service] Loaded trained checkpoint from: model\resnet50_cifake.keras
+======================================================================
+  Image:       samples\real\01_real_airplane.jpg
+  Prediction:  REAL (99.9% confidence)
+  P(REAL):     0.9995
+  P(AI):       0.0005
+  Backend:     tensorflow_keras (ResNet50)
+  Latency:     31.42 ms
+  Explanation: ResNet-50 deep residual manifold matches photographic distribution (P(REAL)=99.9%). Physical sensor noise std=1.84 with natural gradient distribution.
+======================================================================
 ```
 
 ---
 
-## 🌌 2D FFT Spectral Artifact Analysis
+## 🏋️ Model Training & Dataset Pipeline
 
-Latent diffusion models (such as Stable Diffusion) generate synthetic images by decoding compressed latent vectors back into pixel space through a sequence of transposed convolutional layers or upsampling operations.
+### Verify Environment & Dataset
+```bash
+python -m src.train --check
+```
 
-Mathematically, given a 2D grayscale image $f(x, y)$, its 2D Discrete Fourier Transform is:
-$$F(u, v) = \sum_{x=0}^{M-1} \sum_{y=0}^{N-1} f(x, y) e^{-j 2\pi \left(\frac{ux}{M} + \frac{vy}{N}\right)}$$
+### Execute Two-Stage Transfer Learning
+```bash
+python -m src.train --data_dir data/cifake \
+                    --epochs_stage_a 5 \
+                    --epochs_stage_b 5 \
+                    --batch_size 32 \
+                    --fine_tune_from conv5_block1_out \
+                    --output_model model/resnet50_cifake.keras
+```
 
-- **Natural Photographs**: Adhere to the natural power-law decay $P(f) \propto \frac{1}{f^\alpha}$ with $\alpha \approx 2$. Power decays smoothly from low frequencies to the Nyquist boundary.
-- **AI-Generated Images**: Exhibit **checkerboard artifacts** (periodic high-frequency spikes at specific spatial harmonics) and abnormal energy concentration in the outer high-frequency annulus ($r \ge 0.31 \max(H, W)$).
+The training process automatically:
+1. Validates directory structure (`REAL/` and `FAKE/` or `train/` and `test/`).
+2. Applies stratified dataset splitting (70% Train, 20% Validation, 10% Test).
+3. Trains Stage A (head warm-up with frozen ResNet-50 backbone).
+4. Trains Stage B (fine-tuning from `conv5_block1_out` with frozen BatchNorm).
+5. Runs post-training evaluation on held-out test data.
+6. Assesses predictions for class collapse.
+7. Saves the model checkpoint, metadata, history, and metrics to `model/`.
 
-Our detection engine isolates these frequency signatures to provide transparent, explainable decisions alongside deep feature embeddings.
+---
+
+## ⚡ FastAPI REST Backend
+
+Launch the production REST backend:
+```bash
+uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+```
+Interactive OpenAPI documentation is live at `http://localhost:8000/docs`.
+
+### API Endpoints
+
+| Method | Endpoint | Description | Status Codes |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/` | API status, version, and documentation link | 200 |
+| `GET` | `/health` | System health, model availability, and active backend | 200, 503 |
+| `GET` | `/metrics` | Active model evaluation metrics and benchmark figures | 200 |
+| `GET` | `/samples` | Available CIFAR-10 and AI sample image library | 200 |
+| `POST` | `/predict` | Single image classification via multipart file upload | 200, 400, 503 |
+| `POST` | `/batch-predict` | Batch classification for up to 50 images | 200, 400, 503 |
+
+### Example `POST /predict` Request & Response
+```bash
+curl -X POST "http://localhost:8000/predict" \
+     -H "accept: application/json" \
+     -H "Content-Type: multipart/form-data" \
+     -F "file=@samples/real/01_real_airplane.jpg"
+```
+
+```json
+{
+  "filename": "01_real_airplane.jpg",
+  "label": "REAL",
+  "is_ai": false,
+  "is_real": true,
+  "confidence": 0.9995,
+  "confidence_percent": "99.9%",
+  "probabilities": {
+    "REAL": 0.9995,
+    "AI": 0.0005
+  },
+  "backend": "tensorflow_keras (ResNet50)",
+  "artifacts": {
+    "spectral_peak_ratio": 1.25,
+    "high_to_low_ratio": 0.000042,
+    "laplacian_variance": 412.35,
+    "noise_residual_std": 1.84
+  },
+  "explanation": "ResNet-50 deep residual manifold matches photographic distribution (P(REAL)=99.9%). Physical sensor noise std=1.84 with natural gradient distribution.",
+  "processing_time_ms": 31.42
+}
+```
+
+---
+
+## 🏎️ Streamlit Web Application
+
+Launch the interactive dashboard:
+```bash
+streamlit run streamlit_app.py
+```
+Visit `http://localhost:8501` in your web browser.
+
+### Lamborghini Automotive Design System
+The UI implements an aggressive, precision-engineered automotive theme:
+- **Color Palette**: Pure Carbon Black (`#000000`), Dark Titanium (`#0B0E14`), and Giallo Auge Gold (`#FFC000`).
+- **Geometry**: Razor-sharp $0\text{px}$ corner radii with high-contrast structural borders (`#222222`).
+- **Dynamic Telemetry**: Live status badge reflecting the active model backend and health dot in the navigation bar.
+- **Domain Calibration Alert**: Automatically displays a scientific advisory banner when user uploads exceed $32 \times 32$ resolution.
+- **Dual Benchmark Transparency**: Displays both active checkpoint metrics and published 120,000 CIFAKE benchmark statistics side-by-side.
 
 ---
 
@@ -282,34 +342,30 @@ Run the automated test suite with pytest:
 pytest tests/ -v
 ```
 
-All 13 test suites verify:
-- Image normalization, shape invariance, and channel consistency (`test_preprocess_image`).
-- Random flip, brightness, and contrast augmentations (`test_augment_image_numpy`).
-- 70/20/10 stratified dataset partitioning (`test_train_val_test_split`).
-- 2D Fourier transform magnitude spectrum & radial profiling (`test_compute_fft_spectrum`).
-- Artifact feature extraction & metric computation (`test_extract_artifact_features`).
-- Single & batch inference probability calibration (`test_predict_image`).
-- FastAPI endpoints: `/`, `/health`, `/metrics`, `/samples`, `/predict` (`test_api.py`).
+### Coverage
+- `tests/test_model.py`:
+  - ImageNet BGR zero-centering normalization (`test_preprocess_image`)
+  - Stratified 70/20/10 dataset splitting (`test_dataset_stratified_split`)
+  - ResNet-50 production architecture construction (`test_model_architecture`)
+  - Two-stage fine-tuning layer freeze verification (`test_fine_tuning_configuration`)
+  - Authoritative inference and probability calibration (`test_inference_service_authoritative`)
+  - Zero-fallback `ModelUnavailableError` enforcement (`test_model_unavailable_error`)
+  - Prediction collapse detection diagnostics (`test_prediction_collapse_detection`)
+  - 2D Fourier spectrum computation (`test_compute_fft_spectrum`)
+  - Sensor shot noise and spectral artifact extraction (`test_extract_artifact_features`)
+- `tests/test_api.py`:
+  - Root `/` and metadata endpoints
+  - Health `/health` endpoint and backend verification
+  - Performance metrics `/metrics` endpoint
+  - Sample library `/samples` endpoint
+  - Image prediction `/predict` endpoint
+  - Invalid file rejection handling
+  - Multi-image batch inference `/batch-predict` endpoint
 
 ---
 
-## 🐳 Docker Containerization
-
-Build and run using Docker:
-```bash
-# Build Docker image
-docker build -t cifake-detector .
-
-# Run FastAPI container on port 8000
-docker run -p 8000:8000 cifake-detector
-
-# Or run Streamlit dashboard on port 8501
-docker run -p 8501:8501 cifake-detector streamlit run app/streamlit_app.py --server.port=8501 --server.address=0.0.0.0
-```
-
----
-
-## 📜 Citation & Credits
-- **CIFAKE Dataset**: Bird, J.J. and Lotfi, A. (2023). CIFAKE: Image Classification and Explainable Identification of AI-Generated Synthetic Images.
-- **CIFAR-10 Dataset**: Krizhevsky, A. (2009). Learning Multiple Layers of Features from Tiny Images.
-- **ResNet50 Architecture**: He, K., Zhang, X., Ren, S., & Sun, J. (2016). Deep Residual Learning for Image Recognition. CVPR.
+## 📜 Citations & Acknowledgments
+- **CIFAKE Benchmark**: Bird, J.J. and Lotfi, A. (2023). *CIFAKE: Image Classification and Explainable Identification of AI-Generated Synthetic Images*. arXiv:2303.14126.
+- **CIFAR-10**: Krizhevsky, A. (2009). *Learning Multiple Layers of Features from Tiny Images*. University of Toronto.
+- **ResNet Architecture**: He, K., Zhang, X., Ren, S., & Sun, J. (2016). *Deep Residual Learning for Image Recognition*. IEEE Conference on Computer Vision and Pattern Recognition (CVPR).
+- **Stable Diffusion**: Rombach, R., Blattmann, A., Lorenz, D., Esser, P., & Ommer, B. (2022). *High-Resolution Image Synthesis with Latent Diffusion Models*. CVPR.

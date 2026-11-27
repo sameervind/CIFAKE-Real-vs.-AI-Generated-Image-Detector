@@ -1,0 +1,23 @@
+{
+    "model_name": "ResNet50_CIFAKE",
+    "checkpoint_file": "resnet50_cifake.keras",
+    "trained_timestamp": "2026-11-27T17:48:15.412209",
+    "tensorflow_version": "2.22.0-rc1",
+    "input_resolution": [
+        224,
+        224,
+        3
+    ],
+    "class_mapping": {
+        "0": "AI",
+        "1": "REAL"
+    },
+    "stage_a_epochs_completed": 2,
+    "stage_b_epochs_completed": 1,
+    "total_epochs": 3,
+    "train_samples": 13,
+    "val_samples": 5,
+    "test_samples": 2,
+    "final_test_accuracy": 1.0,
+    "final_test_roc_auc": 1.0
+}

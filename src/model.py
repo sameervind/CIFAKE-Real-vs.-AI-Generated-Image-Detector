@@ -1,179 +1,262 @@
 """
-ResNet50 Model Architecture for AI-Generated vs Real Image Classification
-Based on the CIFAKE dataset (CIFAR-10 real vs Stable Diffusion synthetic).
+ResNet50 Transfer Learning Model Architecture & Inference Service for CIFAKE.
+Implements ImageNet-pretrained ResNet50 backbone with GlobalAveragePooling2D,
+BatchNormalization, Dropout(0.4), and Dense(1, sigmoid) output representing P(REAL).
+Strictly eliminates silent fallback heuristics: ResNet50 is the primary, authoritative engine.
 """
 
 import os
+import sys
+from pathlib import Path
+from typing import Dict, Any, Tuple, Optional, Union
 import numpy as np
-from typing import Dict, Any, Tuple, Optional
 
-# Check if TensorFlow is available
 try:
     import tensorflow as tf
-    from tensorflow.keras import layers, models
+    from tensorflow.keras import layers, models, Model
     from tensorflow.keras.applications import ResNet50
     from tensorflow.keras.optimizers import Adam
-    from tensorflow.keras.callbacks import LearningRateScheduler, EarlyStopping
     TF_AVAILABLE = True
 except ImportError:
     TF_AVAILABLE = False
 
+from src.dataset import TARGET_SIZE, preprocess_image, CLASS_NAMES
 
-def build_resnet50_model(input_shape: Tuple[int, int, int] = (32, 32, 3),
-                         learning_rate: float = 0.001) -> Any:
+# Default checkpoint path
+DEFAULT_MODEL_DIR = Path(__file__).resolve().parent.parent / "model"
+DEFAULT_MODEL_PATH = DEFAULT_MODEL_DIR / "resnet50_cifake.keras"
+
+
+class ModelUnavailableError(Exception):
+    """Raised when the trained ResNet50 model weights cannot be loaded."""
+    pass
+
+
+def build_resnet50_model(
+    input_shape: Tuple[int, int, int] = (224, 224, 3),
+    learning_rate: float = 0.001,
+    freeze_backbone: bool = True
+) -> Any:
     """
-    Builds the exact ResNet50 transfer learning model architecture
-    from the original project notebook.
-
-    Architecture:
-    1. Pre-trained ResNet50 base (weights='imagenet', include_top=False, input_shape=(32, 32, 3))
-    2. Flatten layer
-    3. Dense(256, activation='relu')
-    4. BatchNormalization()
-    5. Dropout(0.5)
-    6. Dense(128, activation='relu')
-    7. Dense(1, activation='sigmoid')  # Binary: 0 = AI, 1 = REAL
+    Builds the production transfer-learning ResNet50 architecture:
+    
+    Input (224, 224, 3)
+      ↓
+    ResNet50 Backbone (Pretrained on ImageNet, include_top=False)
+      ↓
+    GlobalAveragePooling2D
+      ↓
+    Dense(128, activation='relu')
+      ↓
+    BatchNormalization
+      ↓
+    Dropout(0.4)
+      ↓
+    Dense(1, activation='sigmoid')  -> P(REAL)
+    
+    Labels:
+      0 = AI / SYNTHETIC
+      1 = REAL PHOTOGRAPH
     """
     if not TF_AVAILABLE:
-        raise ImportError("TensorFlow is required to build the Keras ResNet50 model.")
+        raise ImportError(
+            "TensorFlow is required to build the ResNet50 model. "
+            "Install with: pip install tensorflow"
+        )
 
-    base_model = ResNet50(weights='imagenet', include_top=False, input_shape=input_shape)
-    
-    # Do not freeze base layers (allow fine-tuning on CIFAKE dataset)
-    base_model.trainable = True
+    base_model = ResNet50(
+        weights="imagenet",
+        include_top=False,
+        input_shape=input_shape
+    )
 
-    model = models.Sequential([
-        base_model,
-        layers.Flatten(),
-        layers.Dense(256, activation='relu', name='dense_feature_1'),
-        layers.BatchNormalization(name='batch_norm_1'),
-        layers.Dropout(0.5, name='dropout_1'),
-        layers.Dense(128, activation='relu', name='dense_feature_2'),
-        layers.Dense(1, activation='sigmoid', name='output_classifier')
-    ], name="ai_image_classifier_resnet50")
+    if freeze_backbone:
+        base_model.trainable = False
+
+    inputs = layers.Input(shape=input_shape, name="input_image")
+    x = base_model(inputs, training=False)
+    x = layers.GlobalAveragePooling2D(name="global_avg_pool")(x)
+    x = layers.Dense(128, activation="relu", name="dense_feature")(x)
+    x = layers.BatchNormalization(name="batch_norm")(x)
+    x = layers.Dropout(0.4, name="dropout")(x)
+    outputs = layers.Dense(1, activation="sigmoid", name="output_real")(x)
+
+    model = Model(inputs=inputs, outputs=outputs, name="cifake_resnet50_detector")
 
     optimizer = Adam(learning_rate=learning_rate)
     model.compile(
         optimizer=optimizer,
-        loss='binary_crossentropy',
-        metrics=['accuracy']
+        loss="binary_crossentropy",
+        metrics=["accuracy"]
     )
     return model
 
 
-def get_lr_scheduler():
-    """Learning rate scheduler that decays learning rate by 5% every epoch."""
-    if not TF_AVAILABLE:
-        return None
-    def lr_scheduler(epoch, lr):
-        return lr * 0.95
-    return LearningRateScheduler(lr_scheduler)
-
-
-def get_early_stopping(patience: int = 3):
-    """Early stopping callback with restore_best_weights."""
-    if not TF_AVAILABLE:
-        return None
-    return EarlyStopping(monitor='val_loss', patience=patience, restore_best_weights=True)
-
-
-class ResNet50Detector:
+def configure_fine_tuning(
+    model: Any,
+    fine_tune_from_layer: str = "conv5_block1_out",
+    fine_tune_lr: float = 1e-5
+) -> Any:
     """
-    Production detector wrapper supporting both full TensorFlow Keras ResNet50
-    and high-performance lightweight Fourier/Spatial statistical inference.
+    Stage B Fine-Tuning Configuration:
+    - Unfreezes top ResNet50 residual blocks (starting at `conv5_block1_out`).
+    - Keeps early feature extractor layers frozen.
+    - Keeps BatchNormalization layers frozen in inference mode to prevent statistic corruption.
+    - Recompiles with a low learning rate (~1e-5).
+    """
+    base_model = None
+    for layer in model.layers:
+        if isinstance(layer, Model) or "resnet50" in layer.name.lower():
+            base_model = layer
+            break
+
+    if base_model is None:
+        base_model = model
+
+    base_model.trainable = True
+
+    # Freeze all layers before fine_tune_from_layer
+    freeze_active = True
+    for layer in base_model.layers:
+        if layer.name == fine_tune_from_layer:
+            freeze_active = False
+
+        if freeze_active or isinstance(layer, layers.BatchNormalization):
+            layer.trainable = False
+        else:
+            layer.trainable = True
+
+    model.compile(
+        optimizer=Adam(learning_rate=fine_tune_lr),
+        loss="binary_crossentropy",
+        metrics=["accuracy"]
+    )
+    return model
+
+
+class ResNet50InferenceService:
+    """
+    Authoritative ResNet50 Model Inference Service.
+    Loads and caches the trained Keras model, performs verified preprocessing,
+    and returns genuine calibrated neural network prediction probabilities.
+    Never silently falls back to heuristic engines.
     """
 
     def __init__(self, model_path: Optional[str] = None):
         self.model = None
-        self.backend = None
-        self.model_path = model_path
-        self._init_model(model_path)
+        self.model_path = None
+        self.input_shape = (TARGET_SIZE[0], TARGET_SIZE[1], 3)
+        self.backend = "tensorflow_keras"
+        self._load_model(model_path)
 
-    def _init_model(self, model_path: Optional[str]):
-        if TF_AVAILABLE and model_path and os.path.exists(model_path):
-            try:
-                self.model = tf.keras.models.load_model(model_path)
-                self.backend = "tensorflow_keras"
-                print(f"[Detector] Loaded TensorFlow Keras model from {model_path}")
-                return
-            except Exception as e:
-                print(f"[Detector] Warning: Could not load Keras model ({e}). Using native engine.")
+    def _resolve_model_path(self, model_path: Optional[str] = None) -> Path:
+        """Resolve checkpoint path from argument, environment variable, or default."""
+        if model_path:
+            return Path(model_path)
+        env_path = os.getenv("CIFAKE_MODEL_PATH")
+        if env_path:
+            return Path(env_path)
+        return DEFAULT_MODEL_PATH
 
-        # Native feature & spectral analyzer backend
-        from .frequency_analysis import FrequencyArtifactDetector
-        self.fallback_engine = FrequencyArtifactDetector()
-        self.backend = "spectral_feature_engine"
-        print("[Detector] Initialized high-fidelity Spectral & Spatial Detection Engine.")
+    def _load_model(self, model_path: Optional[str] = None):
+        """Load trained ResNet50 checkpoint."""
+        resolved = self._resolve_model_path(model_path)
+        self.model_path = str(resolved)
 
-    def predict(self, image_np: np.ndarray) -> Dict[str, Any]:
+        if not TF_AVAILABLE:
+            raise ImportError(
+                "TensorFlow is required for ResNet50 inference. "
+                "Install with: pip install tensorflow"
+            )
+
+        if not resolved.exists():
+            raise ModelUnavailableError(
+                f"Trained model checkpoint not found at: {resolved}. "
+                "Train the model first using: python -m src.train --data_dir data/cifake "
+                "or specify a valid checkpoint path via --model or CIFAKE_MODEL_PATH."
+            )
+
+        try:
+            self.model = tf.keras.models.load_model(str(resolved))
+            print(f"[ResNet50Service] Loaded trained checkpoint from: {resolved}")
+        except Exception as e:
+            raise ModelUnavailableError(
+                f"Failed to load Keras model from {resolved}: {e}"
+            )
+
+    @property
+    def active_backend(self) -> str:
+        return "tensorflow_keras (ResNet50)"
+
+    def is_loaded(self) -> bool:
+        """Return True if model checkpoint is loaded and active."""
+        return self.model is not None
+
+    def is_model_loaded(self) -> bool:
+        """Alias for is_loaded."""
+        return self.is_loaded()
+
+    def predict(self, image_input: Any, threshold: float = 0.5) -> Dict[str, Any]:
         """
-        Predict whether an image is REAL (1) or AI-GENERATED (0).
+        Execute ResNet50 inference on an input image.
         
         Args:
-            image_np: RGB numpy array of shape (32, 32, 3) or (H, W, 3), uint8 or float [0, 1]
-
-        Returns:
-            dict containing:
-                - class_name: 'REAL' or 'AI'
-                - class_id: 1 for REAL, 0 for AI
-                - real_probability: float [0, 1]
-                - ai_probability: float [0, 1]
-                - confidence: float [0.5, 1.0]
-                - backend: str
-        """
-        if self.backend == "tensorflow_keras" and self.model is not None:
-            # Preprocess image
-            if image_np.dtype == np.uint8:
-                img_scaled = image_np.astype(np.float32) / 255.0
-            else:
-                img_scaled = image_np.astype(np.float32)
-                if img_scaled.max() > 1.0:
-                    img_scaled = img_scaled / 255.0
-
-            if img_scaled.shape[:2] != (32, 32):
-                import cv2
-                img_scaled = cv2.resize(img_scaled, (32, 32))
-
-            batch = np.expand_dims(img_scaled, axis=0)
-            y_pred = float(self.model.predict(batch, verbose=0)[0][0])
+            image_input: File path, PIL Image, or numpy array.
+            threshold: Decision boundary for REAL class (default 0.5).
             
-            real_prob = y_pred
-            ai_prob = 1.0 - real_prob
-            class_id = 1 if real_prob > 0.5 else 0
-            class_name = 'REAL' if class_id == 1 else 'AI'
-            confidence = max(real_prob, ai_prob)
-
-            return {
-                "class_name": class_name,
-                "class_id": class_id,
-                "real_probability": real_prob,
-                "ai_probability": ai_prob,
-                "confidence": confidence,
-                "backend": "tensorflow_keras",
-                "raw_score": y_pred
-            }
-        else:
-            # Native spectral/feature detector
-            result = self.fallback_engine.detect(image_np)
-            result["backend"] = "spectral_feature_engine"
-            return result
-
-    def predict_proba(self, images: np.ndarray):
+        Returns:
+            Dictionary with label, class_id, probabilities, confidence, and backend.
         """
-        Return probability of class 1 (REAL) for a single image or batch.
+        if not self.is_loaded():
+            raise ModelUnavailableError(
+                "No trained ResNet50 model is currently loaded. "
+                "Please train or provide a model checkpoint before requesting predictions."
+            )
+
+        # Standard shared preprocessing
+        preprocessed = preprocess_image(image_input, target_size=TARGET_SIZE, apply_imagenet_norm=True)
+        batch = np.expand_dims(preprocessed, axis=0)
+
+        # Raw sigmoid output: P(REAL)
+        # Using __call__ for fast eager inference instead of model.predict overhead
+        pred_tensor = self.model(batch, training=False)
+        raw_pred = float(pred_tensor.numpy()[0][0])
         
-        Args:
-            images: shape (32, 32, 3) or (N, 32, 32, 3)
-            
-        Returns:
-            float (single image) or np.ndarray (batch)
-        """
-        if images.ndim == 3:
-            res = self.predict(images)
-            return float(res["real_probability"])
-        elif images.ndim == 4:
-            probs = [float(self.predict(img)["real_probability"]) for img in images]
-            return np.array(probs, dtype=np.float32)
-        else:
-            raise ValueError(f"Expected 3D or 4D array, got shape {images.shape}")
+        # Clip to avoid division by zero or extreme rounding issues while preserving genuine probabilities
+        real_prob = float(np.clip(raw_pred, 0.0001, 0.9999))
+        ai_prob = float(1.0 - real_prob)
 
+        is_real = real_prob >= threshold
+        class_id = 1 if is_real else 0
+        class_name = "REAL" if is_real else "AI"
+        confidence = real_prob if is_real else ai_prob
+
+        return {
+            "label": class_name,
+            "class_id": class_id,
+            "is_real": is_real,
+            "is_ai": not is_real,
+            "probabilities": {
+                "REAL": round(real_prob, 4),
+                "AI": round(ai_prob, 4)
+            },
+            "confidence": round(confidence, 4),
+            "confidence_percent": f"{confidence * 100:.1f}%",
+            "raw_score": round(raw_pred, 6),
+            "threshold": threshold,
+            "backend": "tensorflow_keras",
+            "model_name": "ResNet50",
+            "checkpoint_path": self.model_path
+        }
+
+
+# Singleton service holder
+_GLOBAL_SERVICE: Optional[ResNet50InferenceService] = None
+
+
+def get_inference_service(model_path: Optional[str] = None, force_reload: bool = False) -> ResNet50InferenceService:
+    """Retrieve or initialize the singleton ResNet50 inference service."""
+    global _GLOBAL_SERVICE
+    if _GLOBAL_SERVICE is None or force_reload:
+        _GLOBAL_SERVICE = ResNet50InferenceService(model_path=model_path)
+    return _GLOBAL_SERVICE

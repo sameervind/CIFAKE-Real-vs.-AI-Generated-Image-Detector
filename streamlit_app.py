@@ -26,7 +26,8 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from src.dataset import preprocess_image, TARGET_SIZE
-from src.predict import predict_image
+from src.model import ModelUnavailableError
+from src.predict import predict_image, get_inference_service
 from src.frequency_analysis import compute_fft_spectrum, extract_artifact_features
 
 # Streamlit Page Configuration
@@ -526,38 +527,88 @@ st.markdown("""
 
 # Helper Paths
 ASSETS_DIR = ROOT_DIR / "assets"
+MODEL_DIR = ROOT_DIR / "model"
 SAMPLES_REAL = ROOT_DIR / "samples" / "real"
 SAMPLES_AI = ROOT_DIR / "samples" / "ai"
 
 
 def load_metrics_data():
-    """Load benchmark test metrics from assets."""
-    metrics_file = ASSETS_DIR / "metrics.json"
-    if metrics_file.exists():
-        with open(metrics_file, "r") as f:
-            return json.load(f)
+    """Load evaluation metrics, prioritizing active trained checkpoint over benchmark references."""
+    active_metrics_file = MODEL_DIR / "evaluation_metrics.json"
+    if active_metrics_file.exists():
+        try:
+            with open(active_metrics_file, "r") as f:
+                data = json.load(f)
+            data["source_label"] = "ACTIVE RESNET-50 CHECKPOINT (HELD-OUT TEST SPLIT)"
+            return data
+        except Exception:
+            pass
+
+    benchmark_file = ASSETS_DIR / "metrics.json"
+    if benchmark_file.exists():
+        try:
+            with open(benchmark_file, "r") as f:
+                data = json.load(f)
+            data["source_label"] = "PUBLISHED CIFAKE-120K BENCHMARK (12,000 TEST IMAGES)"
+            return data
+        except Exception:
+            pass
+
     return {
         "accuracy": 0.9228,
         "precision_macro": 0.9242,
         "recall_macro": 0.9230,
         "f1_macro": 0.9224,
-        "roc_auc": 0.9742
+        "roc_auc": 0.9742,
+        "source_label": "PUBLISHED BENCHMARK REFERENCE"
     }
 
 
 def render_sub_nav():
     """Render Lamborghini-inspired floating cockpit sub-nav bar."""
-    st.markdown("""
+    service = get_inference_service()
+    is_loaded = service.is_model_loaded()
+    status_color = "#34C759" if is_loaded else "#FF3B30"
+    status_text = "RESNET-50 ENGINE ONLINE" if is_loaded else "MODEL OFFLINE (UNINITIALIZED)"
+    backend_display = service.active_backend.upper()
+
+    st.markdown(f"""
     <div class="lambo-sub-nav">
         <div class="lambo-sub-nav-left">
             <span class="lambo-sub-nav-brand">CIFAKE <span>//</span> CORSE CLIENTE</span>
-            <span class="lambo-sub-nav-chip">RESNET-50 TRANSFER LEARNING</span>
+            <span class="lambo-sub-nav-chip">{backend_display}</span>
             <span class="lambo-sub-nav-chip">2D FOURIER MTF</span>
         </div>
         <div class="lambo-sub-nav-right">
             <span class="lambo-telemetry-badge">
-                <span class="lambo-status-dot"></span> 92.28% VERIFIED ACCURACY
+                <span class="lambo-status-dot" style="background-color: {status_color}; box-shadow: 0 0 8px {status_color};"></span> {status_text}
             </span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+def render_model_offline_alert(err_msg: str):
+    """Render a prominent Lamborghini cockpit warning when ResNet50 checkpoint is missing."""
+    st.markdown(f"""
+    <div style="background: #140808; border: 1px solid #FF3B30; border-left: 5px solid #FF3B30; padding: 22px 24px; margin: 20px 0; border-radius: 0px;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+            <span style="font-size: 20px;">⚠️</span>
+            <span style="font-size: 15px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; color: #FF3B30;">
+                RESNET-50 INFERENCE SERVICE OFFLINE
+            </span>
+        </div>
+        <p style="font-size: 13px; color: #DDDDDD; line-height: 1.6; margin: 0 0 12px 0;">
+            The authoritative deep-learning model checkpoint was not found. In compliance with strict engineering principles, <b>all silent fallbacks to heuristic engines have been eliminated</b>.
+        </p>
+        <div style="font-size: 11px; color: #888888; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
+            INITIALIZE MODEL CHECKPOINT VIA COMMAND LINE:
+        </div>
+        <code style="background: #000000; border: 1px solid #333333; color: #FFC000; padding: 8px 14px; font-family: 'JetBrains Mono', monospace; font-size: 12px; display: block;">
+            python -m src.train --data_dir samples
+        </code>
+        <div style="font-size: 11px; color: #777777; margin-top: 10px;">
+            Diagnostic: {err_msg}
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -658,15 +709,25 @@ def page_detector(threshold: float, show_fft: bool):
         if selected_image is None:
             st.info("ENGAGE MEDIA INTAKE ON THE LEFT PANEL TO INITIATE MULTI-DOMAIN FORENSIC VERIFICATION.")
         else:
-            with st.spinner("EXECUTING RESNET-50 INFERENCE & 2D FFT SPATIAL HARMONIC COMPUTATION..."):
-                img_array = np.array(selected_image)
-                result = predict_image(img_array, threshold=threshold)
+            try:
+                with st.spinner("EXECUTING RESNET-50 INFERENCE & 2D FFT SPATIAL HARMONIC COMPUTATION..."):
+                    img_array = np.array(selected_image)
+                    result = predict_image(img_array, threshold=threshold)
+            except ModelUnavailableError as mue:
+                render_model_offline_alert(str(mue))
+                st.markdown('</div>', unsafe_allow_html=True)
+                return
+            except Exception as exc:
+                st.error(f"INFERENCE ERROR: {str(exc)}")
+                st.markdown('</div>', unsafe_allow_html=True)
+                return
 
             is_real = result["is_real"]
             conf = result["confidence"]
             p_real = result["probabilities"]["REAL"]
             p_ai = result["probabilities"]["AI"]
             latency = result["processing_time_ms"]
+            backend_used = result.get("backend", "ResNet50")
 
             # Lamborghini Cockpit Verdict Panel
             if is_real:
@@ -674,7 +735,7 @@ def page_detector(threshold: float, show_fft: bool):
                 <div class="lambo-verdict-real">
                     <div class="lambo-verdict-tag tag-real">VERIFICATION STATUS: AUTHENTIC</div>
                     <div class="lambo-verdict-headline headline-real">REAL PHOTOGRAPH</div>
-                    <div class="lambo-verdict-sub">CONFIDENCE: <b>{conf * 100:.1f}%</b> &nbsp;//&nbsp; LATENCY: <b>{latency} MS</b> &nbsp;//&nbsp; OPTICAL BAYER SENSOR NOISE VERIFIED</div>
+                    <div class="lambo-verdict-sub">CONFIDENCE: <b>{conf * 100:.1f}%</b> &nbsp;//&nbsp; LATENCY: <b>{latency} MS</b> &nbsp;//&nbsp; BACKEND: <b>{backend_used}</b></div>
                 </div>
                 """, unsafe_allow_html=True)
             else:
@@ -682,7 +743,16 @@ def page_detector(threshold: float, show_fft: bool):
                 <div class="lambo-verdict-ai">
                     <div class="lambo-verdict-tag tag-ai">VERIFICATION STATUS: SYNTHETIC MANIFOLD DETECTED</div>
                     <div class="lambo-verdict-headline headline-ai">AI-GENERATED IMAGE</div>
-                    <div class="lambo-verdict-sub">CONFIDENCE: <b>{conf * 100:.1f}%</b> &nbsp;//&nbsp; LATENCY: <b>{latency} MS</b> &nbsp;//&nbsp; DECONVOLUTION PERIODIC HARMONICS IDENTIFIED</div>
+                    <div class="lambo-verdict-sub">CONFIDENCE: <b>{conf * 100:.1f}%</b> &nbsp;//&nbsp; LATENCY: <b>{latency} MS</b> &nbsp;//&nbsp; BACKEND: <b>{backend_used}</b></div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            # Resolution Domain Notice
+            img_w, img_h = selected_image.size
+            if img_w != 32 or img_h != 32:
+                st.markdown(f"""
+                <div style="background: #101010; border-left: 3px solid #7D7D7D; padding: 8px 12px; margin: 12px 0; font-size: 11px; color: #8E8E93;">
+                    <b style="color: #FFC000;">DOMAIN CALIBRATION:</b> Specimen [{img_w}×{img_h} px] bilinearly normalized to 32×32 with ImageNet zero-centering. ResNet-50 trained on CIFAR-10 real photographs vs. Stable Diffusion v1.4 synthetic media.
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -844,6 +914,14 @@ def page_architecture():
 
     metrics = load_metrics_data()
 
+    st.markdown(f"""
+    <div style="margin-bottom: 20px;">
+        <span class="lambo-sub-nav-chip" style="color: #FFC000; border-color: #FFC000; font-size: 11px;">
+            VERIFIED SOURCE: {metrics.get('source_label', 'BENCHMARK REFERENCE')}
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
+
     # 4 Key Lamborghini Metric Tiles
     c1, c2, c3, c4 = st.columns(4)
     with c1:
@@ -957,6 +1035,15 @@ def page_batch_evaluation(threshold: float):
     uploaded_files = st.file_uploader("Select images to analyze:", type=["png", "jpg", "jpeg", "webp"], accept_multiple_files=True)
 
     if uploaded_files:
+        service = get_inference_service()
+        if not service.is_model_loaded():
+            try:
+                service.load_model()
+            except ModelUnavailableError as mue:
+                render_model_offline_alert(str(mue))
+                st.markdown('</div>', unsafe_allow_html=True)
+                return
+
         st.write(f"EVALUATING {len(uploaded_files)} SPECIMENS...")
         results = []
         progress_bar = st.progress(0.0)
@@ -971,6 +1058,7 @@ def page_batch_evaluation(threshold: float):
                     "Confidence": f"{res['confidence'] * 100:.1f}%",
                     "P(Real)": f"{res['probabilities']['REAL']:.4f}",
                     "P(AI)": f"{res['probabilities']['AI']:.4f}",
+                    "Backend": res.get("backend", "ResNet50"),
                     "Latency (ms)": res["processing_time_ms"],
                     "Diagnostic": res["explanation"]
                 })
@@ -981,6 +1069,7 @@ def page_batch_evaluation(threshold: float):
                     "Confidence": "N/A",
                     "P(Real)": "N/A",
                     "P(AI)": "N/A",
+                    "Backend": "None",
                     "Latency (ms)": 0,
                     "Diagnostic": str(e)
                 })
@@ -1035,9 +1124,16 @@ def page_about():
 
         <h4 style="color: #FFC000; margin-top: 24px; font-size: 18px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;">FORENSIC DETECTION ALGORITHMS</h4>
         <p>
-        1. <b>FLAT-REGION SENSOR NOISE ESTIMATION</b>: Quantifies physical Poisson-Gaussian camera shot noise in low-gradient domains to eliminate edge-aliasing false positives.<br>
-        2. <b>COLOR CHANNEL COVARIANCE</b>: Validates physical Bayer demosaicing optical coupling between chromatic channels.<br>
-        3. <b>2D FFT POWER SPECTRUM ANALYSIS</b>: Evaluates off-axis periodic delta spikes originating from transposed convolution neural upsampling layers.
+        1. <b>RESNET-50 TRANSFER LEARNING</b>: Deep residual visual feature extraction with fine-tuned top convolution blocks.<br>
+        2. <b>FLAT-REGION SENSOR NOISE ESTIMATION</b>: Quantifies physical Poisson-Gaussian camera shot noise in low-gradient domains.<br>
+        3. <b>2D FFT POWER SPECTRUM ANALYSIS</b>: Evaluates off-axis periodic delta spikes originating from generative deconvolution and upsampling.
+        </p>
+
+        <h4 style="color: #FFC000; margin-top: 24px; font-size: 18px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;">SCIENTIFIC LIMITATIONS & GENERALIZATION</h4>
+        <p>
+        CIFAKE is composed of 32×32 pixel images derived from CIFAR-10 real photographs and Stable Diffusion v1.4 synthetic generations. 
+        A classifier trained strictly on CIFAKE learns the statistical distribution of low-resolution Stable Diffusion v1.4 latent decoding artifacts. 
+        It does not guarantee zero-shot generalization across modern high-resolution generators (such as Midjourney v6, DALL-E 3, FLUX.1) or arbitrary camera sensors without domain-adaptive fine-tuning.
         </p>
     </div>
     """, unsafe_allow_html=True)

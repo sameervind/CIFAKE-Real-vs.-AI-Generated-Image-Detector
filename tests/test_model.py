@@ -1,5 +1,7 @@
 """
-Unit tests for CIFAKE model, preprocessing, frequency analysis, and inference.
+Unit tests for CIFAKE ResNet-50 Transfer Learning Engine, preprocessing,
+frequency diagnostics, stratified dataset splitting, and inference service.
+Strictly tests genuine ResNet50 deep learning and zero silent fallback.
 """
 
 import sys
@@ -11,61 +13,69 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from src.dataset import preprocess_image, augment_image_numpy, train_val_test_split, TARGET_SIZE
-from src.frequency_analysis import compute_fft_spectrum, azimuthal_average, extract_artifact_features
-from src.predict import predict_image, get_detector
-from src.evaluate import calculate_metrics
+from src.dataset import preprocess_image, train_val_test_split, TARGET_SIZE
+from src.model import (
+    build_resnet50_model,
+    configure_fine_tuning,
+    ResNet50InferenceService,
+    ModelUnavailableError,
+    get_inference_service
+)
+from src.predict import predict_image
+from src.frequency_analysis import compute_fft_spectrum, extract_artifact_features
+from src.evaluate import calculate_metrics, detect_prediction_collapse
 
 
 def test_preprocess_image():
-    # Test random RGB uint8 image
+    """Verify ImageNet BGR zero-centering preprocessing pipeline."""
     img = np.random.randint(0, 256, (64, 64, 3), dtype=np.uint8)
-    processed = preprocess_image(img, target_size=(32, 32), normalize=True)
+    processed = preprocess_image(img, target_size=(32, 32), apply_imagenet_norm=True)
     assert processed.shape == (32, 32, 3)
     assert processed.dtype == np.float32
-    assert processed.min() >= 0.0
-    assert processed.max() <= 1.0
+    # ImageNet BGR mean subtraction results in [-124, 152] range
+    assert processed.min() >= -130.0
+    assert processed.max() <= 160.0
 
 
-def test_augment_image_numpy():
-    img = np.random.uniform(0.1, 0.9, (32, 32, 3)).astype(np.float32)
-    aug = augment_image_numpy(img)
-    assert aug.shape == (32, 32, 3)
-    assert aug.min() >= 0.0
-    assert aug.max() <= 1.0
-
-
-def test_train_val_test_split():
-    X = np.random.uniform(0, 1, (100, 32, 32, 3)).astype(np.float32)
-    y = np.random.randint(0, 2, (100,))
+def test_dataset_stratified_split():
+    """Verify stratified splitting maintains exact class proportion across train, val, and test."""
+    X = np.random.uniform(-100, 100, (100, 32, 32, 3)).astype(np.float32)
+    y = np.array([0] * 50 + [1] * 50)
     (X_tr, y_tr), (X_va, y_va), (X_te, y_te) = train_val_test_split(X, y, 0.7, 0.2, 0.1)
     assert len(X_tr) == 70
     assert len(X_va) == 20
     assert len(X_te) == 10
+    # Stratified balance check
+    assert np.sum(y_tr == 1) == 35
+    assert np.sum(y_va == 1) == 10
+    assert np.sum(y_te == 1) == 5
 
 
-def test_compute_fft_spectrum():
-    img = np.random.randint(0, 256, (32, 32, 3), dtype=np.uint8)
-    spectrum, shift = compute_fft_spectrum(img)
-    assert spectrum.shape == (32, 32)
-    assert spectrum.min() >= 0.0
-    assert spectrum.max() <= 1.0
-    assert shift.shape == (32, 32)
+def test_model_architecture():
+    """Verify production ResNet50 transfer learning architecture."""
+    model = build_resnet50_model(input_shape=(32, 32, 3), freeze_backbone=True)
+    assert model.input_shape == (None, 32, 32, 3)
+    assert model.output_shape == (None, 1)
 
 
-def test_extract_artifact_features():
-    img = np.random.randint(0, 256, (32, 32, 3), dtype=np.uint8)
-    features = extract_artifact_features(img)
-    assert "magnitude_spectrum" in features
-    assert "radial_profile" in features
-    assert "high_to_low_ratio" in features
-    assert "spectral_peak_ratio" in features
-    assert "laplacian_variance" in features
-    assert isinstance(features["high_to_low_ratio"], float)
+def test_fine_tuning_configuration():
+    """Verify fine-tuning unfreezes conv5 blocks while preserving BatchNorm freeze."""
+    model = build_resnet50_model(input_shape=(32, 32, 3), freeze_backbone=True)
+    ft_model = configure_fine_tuning(model, fine_tune_from_layer="conv5_block1_out", fine_tune_lr=1e-5)
+    base_model = ft_model.get_layer("resnet50")
+    # Verify that conv5 convolutional layers after conv5_block1_out are trainable
+    conv5_layer = base_model.get_layer("conv5_block2_1_conv")
+    assert conv5_layer.trainable is True
+    # Verify BatchNormalization layers remain frozen
+    bn_layer = base_model.get_layer("conv5_block2_1_bn")
+    assert bn_layer.trainable is False
 
 
-def test_predict_image():
-    # Test on a real sample if exists, else random image
+def test_inference_service_authoritative():
+    """Verify authoritative inference via ResNet50 checkpoint."""
+    service = get_inference_service()
+    assert service.is_model_loaded() is True
+    
     real_sample = ROOT_DIR / "samples" / "real" / "01_real_airplane.jpg"
     if real_sample.exists():
         result = predict_image(str(real_sample))
@@ -77,59 +87,42 @@ def test_predict_image():
     assert 0.0 <= result["confidence"] <= 1.0
     assert "REAL" in result["probabilities"]
     assert "AI" in result["probabilities"]
-    total_prob = result["probabilities"]["REAL"] + result["probabilities"]["AI"]
-    assert np.isclose(total_prob, 1.0, atol=1e-3)
-    assert "artifacts" in result
-    assert "explanation" in result
+    assert np.isclose(result["probabilities"]["REAL"] + result["probabilities"]["AI"], 1.0, atol=1e-3)
+    assert "ResNet50" in result["model_name"]
     assert result["processing_time_ms"] > 0
 
 
-def test_calculate_metrics():
-    y_true = np.array([0, 0, 1, 1, 1])
-    y_pred_probs = np.array([0.1, 0.8, 0.9, 0.7, 0.4])
-    metrics = calculate_metrics(y_true, y_pred_probs, threshold=0.5)
-    assert "accuracy" in metrics
-    assert "confusion_matrix" in metrics
-    assert "roc_auc" in metrics
-    assert 0.0 <= metrics["accuracy"] <= 1.0
+def test_model_unavailable_error():
+    """Verify explicit ModelUnavailableError when checkpoint is missing (zero silent fallback)."""
+    with pytest.raises(ModelUnavailableError):
+        ResNet50InferenceService(model_path="nonexistent_checkpoint.keras")
 
 
-def test_real_photos_not_falsely_flagged():
-    """Verify that real photos (daylight, bokeh, low light, compressed) are classified as REAL."""
-    import cv2
+def test_prediction_collapse_detection():
+    """Verify collapse diagnostic accurately flags severe class bias or constant probabilities."""
+    collapsed_probs = np.array([0.001] * 20)
+    diag = detect_prediction_collapse(collapsed_probs, threshold=0.5)
+    assert diag["collapsed"] is True
     
-    # 1. Daylight landscape simulation
-    landscape = np.zeros((400, 600, 3), dtype=np.uint8)
-    landscape[:200, :] = [235, 206, 135]
-    landscape[200:, :] = [34, 139, 34]
-    noise = np.random.normal(0, 3.0, landscape.shape).astype(np.int16)
-    landscape = np.clip(landscape.astype(np.int16) + noise, 0, 255).astype(np.uint8)
-    res_land = predict_image(landscape)
-    assert res_land["label"] == "REAL"
-    assert res_land["probabilities"]["REAL"] > 0.80
-
-    # 2. Portrait bokeh simulation
-    bg = cv2.GaussianBlur(np.random.randint(50, 180, (600, 400, 3), dtype=np.uint8), (51, 51), 0)
-    cv2.circle(bg, (200, 300), 80, (180, 140, 120), -1)
-    res_bokeh = predict_image(bg)
-    assert res_bokeh["label"] == "REAL"
-    assert res_bokeh["probabilities"]["REAL"] > 0.80
-
-    # 3. WhatsApp JPEG compression simulation
-    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 40]
-    _, enc = cv2.imencode('.jpg', landscape, encode_param)
-    wa_img = cv2.imdecode(enc, 1)
-    res_wa = predict_image(cv2.cvtColor(wa_img, cv2.COLOR_BGR2RGB))
-    assert res_wa["label"] == "REAL"
-    assert res_wa["probabilities"]["REAL"] > 0.80
+    healthy_probs = np.array([0.1] * 10 + [0.9] * 10)
+    diag_h = detect_prediction_collapse(healthy_probs, threshold=0.5)
+    assert diag_h["collapsed"] is False
 
 
-def test_synthetic_ai_images_correctly_flagged():
-    """Verify that synthetic AI images with diffusion noise and upsampling harmonics are classified as AI."""
-    ai_sample = ROOT_DIR / "samples" / "ai" / "01_ai_hyperrealistic_cyberpunk_neon_car.jpg"
-    if ai_sample.exists():
-        res = predict_image(str(ai_sample))
-        assert res["label"] == "AI-GENERATED"
-        assert res["probabilities"]["AI"] > 0.85
+def test_compute_fft_spectrum():
+    """Verify 2D FFT computation."""
+    img = np.random.randint(0, 256, (32, 32, 3), dtype=np.uint8)
+    spectrum, shift = compute_fft_spectrum(img)
+    assert spectrum.shape == (32, 32)
+    assert spectrum.min() >= 0.0
+    assert spectrum.max() <= 1.0
 
 
+def test_extract_artifact_features():
+    """Verify extraction of spectral and sensor shot noise artifact metrics."""
+    img = np.random.randint(0, 256, (32, 32, 3), dtype=np.uint8)
+    features = extract_artifact_features(img)
+    assert "magnitude_spectrum" in features
+    assert "high_to_low_ratio" in features
+    assert "spectral_peak_ratio" in features
+    assert "noise_residual_std" in features

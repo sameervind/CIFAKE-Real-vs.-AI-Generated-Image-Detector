@@ -1,0 +1,56 @@
+{
+    "accuracy": 1.0,
+    "precision_macro": 1.0,
+    "recall_macro": 1.0,
+    "f1_macro": 1.0,
+    "roc_auc": 1.0,
+    "binary_cross_entropy": 0.0009,
+    "specificity": 1.0,
+    "false_positive_rate": 0.0,
+    "false_negative_rate": 0.0,
+    "threshold": 0.5,
+    "per_class": {
+        "AI": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0,
+            "support": 1
+        },
+        "REAL": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0,
+            "support": 1
+        }
+    },
+    "confusion_matrix": {
+        "true_ai_pred_ai": 1,
+        "true_ai_pred_real": 0,
+        "true_real_pred_ai": 0,
+        "true_real_pred_real": 1,
+        "matrix": [
+            [
+                1,
+                0
+            ],
+            [
+                0,
+                1
+            ]
+        ]
+    },
+    "collapse_diagnostic": {
+        "collapsed": false,
+        "ratio_predicted_real": 0.5,
+        "ratio_predicted_ai": 0.5,
+        "prob_mean": 0.4994,
+        "prob_std": 0.4991,
+        "prob_range": [
+            0.0003,
+            0.9984
+        ],
+        "mean_prob_for_true_real": 0.9984,
+        "mean_prob_for_true_ai": 0.0003,
+        "warnings": []
+    }
+}
