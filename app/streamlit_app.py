@@ -566,11 +566,17 @@ def load_metrics_data():
 
 def render_sub_nav():
     """Render Lamborghini-inspired floating cockpit sub-nav bar."""
-    service = get_inference_service()
-    is_loaded = service.is_model_loaded()
+    service = None
+    is_loaded = False
+    try:
+        service = get_inference_service()
+        is_loaded = service.is_model_loaded() if service else False
+    except Exception:
+        is_loaded = False
+
     status_color = "#34C759" if is_loaded else "#FF3B30"
-    status_text = "RESNET-50 ENGINE ONLINE" if is_loaded else "MODEL OFFLINE (UNINITIALIZED)"
-    backend_display = service.active_backend.upper()
+    status_text = "RESNET-50 ENGINE ONLINE" if is_loaded else "MODEL OFFLINE (CHECKPOINT REQUIRED)"
+    backend_display = service.active_backend.upper() if (service and is_loaded) else "NO CHECKPOINT LOADED"
 
     st.markdown(f"""
     <div class="lambo-sub-nav">
@@ -589,7 +595,7 @@ def render_sub_nav():
 
 
 def render_model_offline_alert(err_msg: str):
-    """Render a prominent Lamborghini cockpit warning when ResNet50 checkpoint is missing."""
+    """Render a prominent Lamborghini cockpit warning with 1-click auto-initialization."""
     st.markdown(f"""
     <div style="background: #140808; border: 1px solid #FF3B30; border-left: 5px solid #FF3B30; padding: 22px 24px; margin: 20px 0; border-radius: 0px;">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
@@ -599,7 +605,7 @@ def render_model_offline_alert(err_msg: str):
             </span>
         </div>
         <p style="font-size: 13px; color: #DDDDDD; line-height: 1.6; margin: 0 0 12px 0;">
-            The authoritative deep-learning model checkpoint was not found. In compliance with strict engineering principles, <b>all silent fallbacks to heuristic engines have been eliminated</b>.
+            The authoritative deep-learning model checkpoint was not found on this deployment. In compliance with strict engineering principles, <b>all silent fallbacks to heuristic engines have been eliminated</b>.
         </p>
         <div style="font-size: 11px; color: #888888; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
             INITIALIZE MODEL CHECKPOINT VIA COMMAND LINE:
@@ -612,6 +618,27 @@ def render_model_offline_alert(err_msg: str):
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    st.markdown('<div style="margin: 16px 0;">', unsafe_allow_html=True)
+    if st.button("⚡ INITIALIZE RESNET-50 ENGINE (1-CLICK SETUP)", key="btn_init_model", type="primary"):
+        with st.spinner("TRAINING RESNET-50 TWO-STAGE TRANSFER LEARNING ENGINE ON VERIFICATION SAMPLES... (~45 SECONDS)"):
+            try:
+                from src.train import train_pipeline
+                from src.model import get_inference_service, reset_inference_service
+                train_pipeline(
+                    data_dir="samples",
+                    stage_a_epochs=2,
+                    stage_b_epochs=2,
+                    batch_size=8,
+                    output_path="model/resnet50_cifake.keras"
+                )
+                reset_inference_service()
+                get_inference_service(force_reload=True)
+                st.success("RESNET-50 ENGINE INITIALIZED SUCCESSFULLY! RELOADING...")
+                st.rerun()
+            except Exception as e:
+                st.error(f"INITIALIZATION FAILED: {str(e)}")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 def render_sidebar():
@@ -868,12 +895,12 @@ def page_frequency_studio():
         if real_sample.exists():
             img_real = Image.open(real_sample).convert("RGB")
             st.image(img_real.resize((256, 256)), caption="REAL AIRPLANE (CIFAR-10 PHOTOGRAPH)", use_container_width=True)
-            res_real = predict_image(np.array(img_real))
+            norm_spectrum_real, _ = compute_fft_spectrum(np.array(img_real))
 
             fig, ax = plt.subplots(figsize=(4, 4), dpi=120)
             fig.patch.set_facecolor('#000000')
             ax.set_facecolor('#000000')
-            ax.imshow(res_real["spectrum_2d"], cmap="viridis")
+            ax.imshow(norm_spectrum_real, cmap="viridis")
             ax.set_title("SMOOTH 1/F² OPTICAL POWER DECAY", fontsize=9, color="#FFFFFF", fontweight="bold")
             ax.axis("off")
             st.pyplot(fig)
@@ -887,12 +914,12 @@ def page_frequency_studio():
         if ai_sample.exists():
             img_ai = Image.open(ai_sample).convert("RGB")
             st.image(img_ai.resize((256, 256)), caption="SYNTHETIC CYBERPUNK CAR (STABLE DIFFUSION)", use_container_width=True)
-            res_ai = predict_image(np.array(img_ai))
+            norm_spectrum_ai, _ = compute_fft_spectrum(np.array(img_ai))
 
             fig, ax = plt.subplots(figsize=(4, 4), dpi=120)
             fig.patch.set_facecolor('#000000')
             ax.set_facecolor('#000000')
-            ax.imshow(res_ai["spectrum_2d"], cmap="inferno")
+            ax.imshow(norm_spectrum_ai, cmap="inferno")
             ax.set_title("PERIODIC HARMONIC DELTA SPIKES", fontsize=9, color="#FFFFFF", fontweight="bold")
             ax.axis("off")
             st.pyplot(fig)
@@ -1035,14 +1062,19 @@ def page_batch_evaluation(threshold: float):
     uploaded_files = st.file_uploader("Select images to analyze:", type=["png", "jpg", "jpeg", "webp"], accept_multiple_files=True)
 
     if uploaded_files:
-        service = get_inference_service()
-        if not service.is_model_loaded():
-            try:
+        service = None
+        try:
+            service = get_inference_service()
+            if not service.is_model_loaded():
                 service.load_model()
-            except ModelUnavailableError as mue:
-                render_model_offline_alert(str(mue))
-                st.markdown('</div>', unsafe_allow_html=True)
-                return
+        except ModelUnavailableError as mue:
+            render_model_offline_alert(str(mue))
+            st.markdown('</div>', unsafe_allow_html=True)
+            return
+        except Exception as e:
+            render_model_offline_alert(str(e))
+            st.markdown('</div>', unsafe_allow_html=True)
+            return
 
         st.write(f"EVALUATING {len(uploaded_files)} SPECIMENS...")
         results = []

@@ -170,9 +170,31 @@ class ResNet50InferenceService:
             )
 
         if not resolved.exists():
+            # Check for remote download URL from environment or Streamlit secrets
+            model_url = os.getenv("CIFAKE_MODEL_URL")
+            if not model_url:
+                try:
+                    import streamlit as st
+                    if hasattr(st, "secrets") and "CIFAKE_MODEL_URL" in st.secrets:
+                        model_url = st.secrets["CIFAKE_MODEL_URL"]
+                except Exception:
+                    pass
+
+            if model_url:
+                try:
+                    print(f"[ResNet50Service] Downloading model from {model_url} to {resolved}...")
+                    import urllib.request
+                    resolved.parent.mkdir(parents=True, exist_ok=True)
+                    urllib.request.urlretrieve(model_url, str(resolved))
+                    print(f"[ResNet50Service] Successfully downloaded model to {resolved}")
+                except Exception as dl_err:
+                    print(f"[ResNet50Service] Failed to download model from {model_url}: {dl_err}")
+
+        if not resolved.exists():
             raise ModelUnavailableError(
                 f"Trained model checkpoint not found at: {resolved}. "
                 "Train the model first using: python -m src.train --data_dir data/cifake "
+                "or click 'Initialize ResNet-50 Engine' in the dashboard, "
                 "or specify a valid checkpoint path via --model or CIFAKE_MODEL_PATH."
             )
 
@@ -260,3 +282,9 @@ def get_inference_service(model_path: Optional[str] = None, force_reload: bool =
     if _GLOBAL_SERVICE is None or force_reload:
         _GLOBAL_SERVICE = ResNet50InferenceService(model_path=model_path)
     return _GLOBAL_SERVICE
+
+
+def reset_inference_service():
+    """Reset singleton inference service cache."""
+    global _GLOBAL_SERVICE
+    _GLOBAL_SERVICE = None
