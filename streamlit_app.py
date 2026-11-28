@@ -595,7 +595,7 @@ def render_sub_nav():
 
 
 def init_model_on_cloud():
-    """Train ResNet-50 transfer learning weights on verification samples for cloud environments."""
+    """Train deep learning model weights on verification samples for cloud environments."""
     from src.train import train_pipeline
     from src.model import get_inference_service, reset_inference_service
     train_pipeline(
@@ -603,7 +603,7 @@ def init_model_on_cloud():
         stage_a_epochs=2,
         stage_b_epochs=2,
         batch_size=8,
-        output_path="model/resnet50_cifake.keras"
+        output_path="model/best_cifake_model.keras"
     )
     reset_inference_service()
     get_inference_service(force_reload=True)
@@ -616,15 +616,15 @@ def render_model_offline_alert(err_msg: str, button_key: str = "banner_init_mode
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
             <span style="font-size: 24px;">⚡</span>
             <span style="font-size: 16px; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase; color: #FF3B30;">
-                RESNET-50 INFERENCE ENGINE OFFLINE (CHECKPOINT REQUIRED)
+                DEEP LEARNING INFERENCE ENGINE OFFLINE (CHECKPOINT REQUIRED)
             </span>
         </div>
         <p style="font-size: 14px; color: #EEEEEE; line-height: 1.6; margin: 0 0 14px 0;">
-            This deployment on Streamlit Cloud does not have the pre-trained weights checkpoint (<code>model/resnet50_cifake.keras</code>). 
+            This cloud instance does not have the pre-trained weights checkpoint (<code>model/best_cifake_model.keras</code>). 
             In compliance with strict engineering principles, <b>all silent fallbacks to heuristic engines are disabled</b>.
         </p>
         <p style="font-size: 13px; color: #FFC000; font-weight: 700; margin: 0 0 14px 0;">
-            👇 Click the yellow button below to train and compile the ResNet-50 Two-Stage Transfer Learning engine directly on this instance (~45 seconds).
+            👇 Click the yellow button below to compile and train the deep learning engine directly on this instance (~30 seconds).
         </p>
         <div style="font-size: 11px; color: #777777;">
             Diagnostic: {err_msg}
@@ -632,11 +632,11 @@ def render_model_offline_alert(err_msg: str, button_key: str = "banner_init_mode
     </div>
     """, unsafe_allow_html=True)
 
-    if st.button("⚡ INITIALIZE RESNET-50 ENGINE (1-CLICK SETUP)", key=button_key, type="primary", use_container_width=True):
-        with st.spinner("TRAINING RESNET-50 TWO-STAGE TRANSFER LEARNING ENGINE ON VERIFICATION SAMPLES... PLEASE WAIT ~45 SECONDS."):
+    if st.button("⚡ INITIALIZE DEEP LEARNING ENGINE (1-CLICK SETUP)", key=button_key, type="primary", use_container_width=True):
+        with st.spinner("INITIALIZING & COMPILING CIFAKE DEEP LEARNING ENGINE... PLEASE WAIT ~30 SECONDS."):
             try:
                 init_model_on_cloud()
-                st.success("✅ RESNET-50 ENGINE INITIALIZED AND ONLINE! RELOADING DASHBOARD...")
+                st.success("✅ DEEP LEARNING ENGINE INITIALIZED AND ONLINE! RELOADING DASHBOARD...")
                 st.rerun()
             except Exception as e:
                 st.error(f"INITIALIZATION FAILED: {str(e)}")

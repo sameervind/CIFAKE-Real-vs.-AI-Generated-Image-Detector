@@ -86,10 +86,12 @@ Thumbs.db
 
 # Large dataset downloads & heavy weight checkpoints (keep repository lightweight)
 data/
-model/*.keras
 model/*.h5
 model/*.pth
 model/*.pt
+model/resnet50_cifake.keras
+model/*_checkpoint.keras
+!model/best_cifake_model.keras
 
 # Whitelist tracking of sample test assets and reports
 !assets/

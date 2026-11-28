@@ -474,6 +474,90 @@ def run_two_stage_training(
     return model, metrics
 
 
+def train_pipeline(
+    data_dir: str = "samples",
+    stage_a_epochs: int = 2,
+    stage_b_epochs: int = 2,
+    batch_size: int = 8,
+    max_samples_per_class: Optional[int] = None,
+    output_path: Optional[str] = None
+) -> Tuple[Any, Dict[str, Any]]:
+    """
+    Automated training pipeline for cloud initialization and custom datasets.
+    Loads data, performs stratified partitioning, and trains the model.
+    Provides backward compatibility for 1-click cloud setup in Streamlit.
+    """
+    if not TF_AVAILABLE:
+        raise RuntimeError("TensorFlow is required for training.")
+
+    checkpoint_path = Path(output_path) if output_path else BEST_MODEL_PATH
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # 1. Check if cached CIFAKE dataset is available
+    cache_dir = Path("data/cifake_cache")
+    if (cache_dir / "train_images.npy").exists():
+        (X_tr, y_tr), (X_vl, y_vl), (X_te, y_te) = load_cifake_cache(val_ratio=0.2)
+        model = build_cifar_cnn(learning_rate=0.001)
+        sub_n = min(len(X_tr), 2000)
+        sub_val = min(len(X_vl), 500)
+        model.fit(
+            X_tr[:sub_n], y_tr[:sub_n],
+            validation_data=(X_vl[:sub_val], y_vl[:sub_val]),
+            epochs=max(stage_a_epochs, 2),
+            batch_size=batch_size or 32,
+            verbose=1
+        )
+        model.save(str(checkpoint_path))
+        if checkpoint_path != BEST_MODEL_PATH:
+            model.save(str(BEST_MODEL_PATH))
+        preds = model(tf.cast(X_te[:500], tf.float32), training=False).numpy().flatten()
+        metrics = calculate_metrics(y_te[:500], preds, threshold=0.5)
+        return model, metrics
+
+    # 2. Otherwise load from directory (e.g., samples/ containing real and ai)
+    data_path = Path(data_dir)
+    X, y, paths = load_dataset_from_directory(
+        data_dir=data_path,
+        max_samples_per_class=max_samples_per_class,
+        target_size=TARGET_SIZE
+    )
+
+    if len(X) == 0:
+        raise ValueError(
+            f"No valid images discovered in '{data_dir}'. "
+            "Verify that the directory contains 'REAL' and 'FAKE' subfolders with images."
+        )
+
+    # Stratified split
+    train_data, val_data, test_data = train_val_test_split(
+        X, y,
+        train_ratio=0.7,
+        val_ratio=0.2,
+        test_ratio=0.1,
+        seed=42
+    )
+
+    # Train model
+    model, metrics = run_two_stage_training(
+        train_data=train_data,
+        val_data=val_data,
+        test_data=test_data,
+        stage_a_epochs=stage_a_epochs,
+        stage_b_epochs=stage_b_epochs,
+        batch_size=batch_size,
+        output_path=str(checkpoint_path)
+    )
+
+    # Also save to best_cifake_model.keras so both paths exist
+    if checkpoint_path != BEST_MODEL_PATH:
+        try:
+            model.save(str(BEST_MODEL_PATH))
+        except Exception:
+            pass
+
+    return model, metrics
+
+
 def main():
     parser = argparse.ArgumentParser(description="CIFAKE CPU-Optimized Training & Benchmark Suite.")
     parser.add_argument("--check", action="store_true", help="Validate runtime environment and dependencies.")
