@@ -77,65 +77,67 @@ class TransparentDecisionEngine:
         forensic_ai_prob = forensic_res.synthetic_probability
 
         spectral_peak = forensic_res.spectral_peak_ratio
-        if spectral_metrics and "spectral_peak_ratio" in spectral_metrics:
-            spectral_peak = max(spectral_peak, float(spectral_metrics["spectral_peak_ratio"]))
 
         # -------------------------------------------------------------
         # BRANCH 1: OUT-OF-DISTRIBUTION INPUT (Domain Shift Active)
         # -------------------------------------------------------------
         if is_ood:
-            # ResNet-50 was trained on 32x32 CIFAR-10 objects.
-            # Its raw probability is uncalibrated and CANNOT be treated as authoritative.
+            # Domain shift detected: image resolution or manifold deviates from 32x32 CIFAKE.
+            # CRITICAL RULES:
+            # 1. OOD score must NEVER be treated as AI-generation probability.
+            # 2. Unknown image categories must not automatically become FAKE.
+            # 3. If analytical signals conflict or evidence is insufficient, report INCONCLUSIVE.
 
-            # Sub-case 1A: Modern Forensics or Spectral Analysis detects generative signatures
-            if is_synthetic_forensic or spectral_peak > 6.0 or forensic_res.laplacian_kurtosis > 14.0 or forensic_res.plasticity_index > 7.0:
+            # Sub-case 1A: Concordant AI Evidence
+            # Deep model recognizes generative diffusion manifold (P(AI) >= 0.60)
+            # AND multi-scale forensics corroborates with synthetic signatures (or spectral lattice peak > 6.0)
+            if (cifake_ai_prob >= 0.60 and is_synthetic_forensic) or spectral_peak > 6.5:
                 label = "AI"
                 verdict = "LIKELY AI-GENERATED"
                 class_id = 0
                 is_real = False
                 is_ai = True
                 is_inconclusive = False
-                primary_driver = "MODERN_FORENSICS"
+                primary_driver = "MODERN_FORENSICS" if (is_synthetic_forensic or spectral_peak > 6.5) else "CIFAKE_DEEP_MODEL"
 
-                # Calibrate confidence from physical forensic evidence
-                calibrated_conf = max(0.75, forensic_ai_prob)
+                calibrated_conf = min(0.92, max(0.70, round(cifake_ai_prob * (1.0 - ood_score * 0.10), 4)))
                 final_probs = {
                     "REAL": round(1.0 - calibrated_conf, 4),
                     "AI": round(calibrated_conf, 4)
                 }
 
                 rationale = (
-                    f"Out-of-Distribution Domain Shift Detected (OOD score: {ood_score:.2f}). "
-                    f"The CIFAKE ResNet-50 benchmark classifier is uncalibrated on this high-resolution/non-CIFAR image "
-                    f"(which downsampling biased towards REAL with raw P(REAL)={cifake_real_prob * 100:.1f}%). "
-                    f"However, the Multi-Scale Forensic Analyzer detected decisive physical synthetic anomalies: "
-                    f"{'; '.join(forensic_res.detected_anomalies[:2])}. "
-                    f"Forensic optical evidence overrides the biased 32x32 manifold projection."
+                    f"Out-of-Distribution image exhibits corroborating generative signatures across deep feature projections "
+                    f"(P(AI)={cifake_ai_prob * 100:.1f}%) and multi-scale forensic analysis "
+                    f"({'; '.join(forensic_res.detected_anomalies[:2]) if forensic_res.detected_anomalies else 'latent generative manifold footprint'})."
                 )
 
-            # Sub-case 1B: Clean photographic optical signatures (no anomalies, natural noise)
-            elif not is_synthetic_forensic and forensic_res.real_probability >= 0.70 and len(forensic_res.detected_anomalies) == 0:
+            # Sub-case 1B: Concordant REAL Evidence
+            # Deep model recognizes authentic photographic features (P(REAL) >= 0.70)
+            # AND multi-scale forensics detects no synthetic generative anomalies
+            elif cifake_real_prob >= 0.70 and not is_synthetic_forensic and spectral_peak < 5.0:
                 label = "REAL"
                 verdict = "LIKELY REAL"
                 class_id = 1
                 is_real = True
                 is_ai = False
                 is_inconclusive = False
-                primary_driver = "MODERN_FORENSICS"
+                primary_driver = "CIFAKE_DEEP_MODEL"
 
-                calibrated_conf = min(0.85, forensic_res.real_probability)
+                calibrated_conf = min(0.88, max(0.65, round(cifake_real_prob * (1.0 - ood_score * 0.18), 4)))
                 final_probs = {
                     "REAL": round(calibrated_conf, 4),
                     "AI": round(1.0 - calibrated_conf, 4)
                 }
 
                 rationale = (
-                    f"Out-of-Distribution Domain Shift Detected (OOD score: {ood_score:.2f}). "
-                    f"Image falls outside the CIFAKE benchmark, but multi-scale forensic analysis verified "
-                    f"natural photographic gradient dispersion, consistent optical sensor noise, and absence of generative artifacts."
+                    f"Out-of-Distribution image exhibits non-benchmark resolution ({ood_res.resolution_scale_factor:.1f}x CIFAKE scale), "
+                    f"but native deep convolutional features (P(REAL)={cifake_real_prob * 100:.1f}%) and natural gradient dispersion "
+                    f"(PRNU residual std={forensic_res.noise_residual_std:.2f}) confirm an authentic camera photograph."
                 )
 
-            # Sub-case 1C: Ambiguous or Conflicting Evidence
+            # Sub-case 1C: Ambiguous, Borderline, or Conflicting Evidence -> INCONCLUSIVE
+            # (e.g. deep model says REAL but forensics flagged anomalies, or deep model is close to 0.50)
             else:
                 label = "INCONCLUSIVE"
                 verdict = "INCONCLUSIVE / OUT OF DISTRIBUTION"
@@ -152,10 +154,10 @@ class TransparentDecisionEngine:
                 calibrated_conf = 0.50
 
                 rationale = (
-                    f"Image is Out-of-Distribution (OOD score: {ood_score:.2f}, scale: {ood_res.resolution_scale_factor:.1f}x) "
-                    f"with conflicting or borderline analytical signals. "
-                    f"The CIFAKE 32x32 ResNet-50 model is uncalibrated for this domain. "
-                    f"To prevent false certainty, the authenticity determination is designated as INCONCLUSIVE."
+                    f"Out-of-Distribution domain shift detected away from the 32x32 CIFAKE benchmark (OOD score: {ood_score:.2f}, "
+                    f"scale: {ood_res.resolution_scale_factor:.1f}x) with conflicting or borderline analytical evidence "
+                    f"(P(REAL)={cifake_real_prob * 100:.1f}%, forensic synthetic likely={is_synthetic_forensic}). "
+                    f"To prevent false certainty, the determination is designated as INCONCLUSIVE."
                 )
 
         # -------------------------------------------------------------

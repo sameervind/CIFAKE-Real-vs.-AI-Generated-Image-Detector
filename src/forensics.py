@@ -199,12 +199,10 @@ class MultiScaleForensicAnalyzer:
         # 6. Composite Forensic Verdict Formulation
         # -------------------------------------------------------------
         if anomaly_scores:
-            # Combine individual anomaly evidence using soft maximum
             base_p = max(anomaly_scores)
             extra = sum(s * 0.15 for s in anomaly_scores if s < base_p)
-            p_ai = min(0.98, base_p + extra)
+            p_ai = min(0.95, base_p + extra)
         else:
-            # Baseline natural score
             p_ai = 0.15 if min(h, w) > 64 else 0.35
 
         p_real = round(1.0 - p_ai, 4)
