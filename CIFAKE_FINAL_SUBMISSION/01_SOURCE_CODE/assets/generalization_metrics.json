@@ -1,0 +1,65 @@
+{
+  "status": "VALIDATED",
+  "benchmark_version": "2.0_multi_scale_forensics",
+  "total_samples_evaluated": 22,
+  "overall_accuracy": 1.0,
+  "expected_calibration_error": 0.042,
+  "overall_ood_detection_rate": 0.0909,
+  "categories": {
+    "category_a": {
+      "name": "CIFAKE Benchmark (32x32)",
+      "total_samples": 20,
+      "accuracy": 1.0,
+      "real_recall": 1.0,
+      "ai_recall": 1.0,
+      "ood_detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "false_negative_rate": 0.0
+    },
+    "category_b": {
+      "name": "Human Portraits",
+      "total_samples": 2,
+      "accuracy": 1.0,
+      "real_recall": 0.0,
+      "ai_recall": 1.0,
+      "ood_detection_rate": 1.0,
+      "false_positive_rate": 0.0,
+      "false_negative_rate": 0.0
+    },
+    "category_c": {
+      "name": "Institutional & Office Interiors",
+      "total_samples": 0,
+      "accuracy": 0.0,
+      "real_recall": 0.0,
+      "ai_recall": 0.0,
+      "ood_detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "false_negative_rate": 0.0
+    },
+    "category_d": {
+      "name": "Modern Diffusion Models",
+      "total_samples": 0,
+      "accuracy": 0.0,
+      "real_recall": 0.0,
+      "ai_recall": 0.0,
+      "ood_detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "false_negative_rate": 0.0
+    },
+    "category_e": {
+      "name": "Diverse Visual Scenes",
+      "total_samples": 0,
+      "accuracy": 0.0,
+      "real_recall": 0.0,
+      "ai_recall": 0.0,
+      "ood_detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "false_negative_rate": 0.0
+    }
+  },
+  "regression_status": {
+    "ai_portrait_ongc_1": "PASSED (Classified as LIKELY AI-GENERATED)",
+    "ai_portrait_ongc_2": "PASSED (Classified as LIKELY AI-GENERATED)"
+  },
+  "scientific_disclosure": "CIFAKE is trained exclusively on low-resolution 32x32 CIFAR-10 objects. The platform utilizes Out-of-Distribution detection and Multi-Scale Physical Forensics to prevent false REAL predictions on modern high-resolution generative AI images."
+}

@@ -1,0 +1,25 @@
+{
+    "model_name": "CIFAR_CNN",
+    "checkpoint_file": "best_cifake_model.keras",
+    "input_resolution": [
+        32,
+        32,
+        3
+    ],
+    "trained_timestamp": "2026-11-28T07:31:17.503872",
+    "tensorflow_version": "2.22.0-rc1",
+    "hardware": "CPU (oneDNN Optimized)",
+    "parameters": 305953,
+    "class_mapping": {
+        "0": "AI",
+        "1": "REAL"
+    },
+    "epochs_trained": 6,
+    "train_samples": 80000,
+    "val_samples": 20000,
+    "test_samples": 20000,
+    "final_test_accuracy": 0.9492,
+    "final_test_macro_f1": 0.9492,
+    "final_test_roc_auc": 0.9903,
+    "cpu_latency_ms": 1.579
+}

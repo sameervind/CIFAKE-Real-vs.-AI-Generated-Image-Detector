@@ -1,0 +1,107 @@
+[
+  {
+    "specimen_name": "CIFAKE REAL Sample (Airplane)",
+    "path": "samples/real/01_real_airplane.jpg",
+    "ground_truth": "REAL",
+    "verdict": "LIKELY REAL",
+    "label": "REAL",
+    "primary_driver": "CIFAR_CNN",
+    "is_real": true,
+    "is_ai": false,
+    "is_ood": false,
+    "ood_score": 0.4803,
+    "raw_probabilities": {
+      "REAL": 0.7233,
+      "AI": 0.2767
+    },
+    "calibrated_confidence": 0.7233,
+    "confidence_percent": "72.3%",
+    "raw_score": 0.723273,
+    "architecture": "cifar_cnn (Native 32x32 Convolutional Neural Network)",
+    "correct": true
+  },
+  {
+    "specimen_name": "CIFAKE FAKE Sample (Mythical Bird)",
+    "path": "samples/ai/02_ai_diffused_fantasy_mythical_bird.jpg",
+    "ground_truth": "AI",
+    "verdict": "LIKELY AI-GENERATED",
+    "label": "AI",
+    "primary_driver": "CIFAR_CNN",
+    "is_real": false,
+    "is_ai": true,
+    "is_ood": true,
+    "ood_score": 0.53,
+    "raw_probabilities": {
+      "REAL": 0.1002,
+      "AI": 0.8998
+    },
+    "calibrated_confidence": 0.8521,
+    "confidence_percent": "85.2%",
+    "raw_score": 0.100166,
+    "architecture": "cifar_cnn (Native 32x32 Convolutional Neural Network)",
+    "correct": true
+  },
+  {
+    "specimen_name": "Known Genuine Portrait (Real)",
+    "path": "tests/regression/known_real/verified_real_portrait_1.jpg",
+    "ground_truth": "REAL",
+    "verdict": "LIKELY REAL",
+    "label": "REAL",
+    "primary_driver": "CIFAR_CNN",
+    "is_real": true,
+    "is_ai": false,
+    "is_ood": true,
+    "ood_score": 0.8717,
+    "raw_probabilities": {
+      "REAL": 0.9996,
+      "AI": 0.0004
+    },
+    "calibrated_confidence": 0.9125,
+    "confidence_percent": "91.2%",
+    "raw_score": 0.999645,
+    "architecture": "cifar_cnn (Native 32x32 Convolutional Neural Network)",
+    "correct": true
+  },
+  {
+    "specimen_name": "Known AI-Generated Portrait 1 (ONGC)",
+    "path": "tests/regression_data/ai_portrait_ongc_1.png",
+    "ground_truth": "AI",
+    "verdict": "LIKELY AI-GENERATED",
+    "label": "AI",
+    "primary_driver": "CIFAR_CNN",
+    "is_real": false,
+    "is_ai": true,
+    "is_ood": true,
+    "ood_score": 0.7925,
+    "raw_probabilities": {
+      "REAL": 0.0582,
+      "AI": 0.9418
+    },
+    "calibrated_confidence": 0.8672,
+    "confidence_percent": "86.7%",
+    "raw_score": 0.058214,
+    "architecture": "cifar_cnn (Native 32x32 Convolutional Neural Network)",
+    "correct": true
+  },
+  {
+    "specimen_name": "Known AI-Generated Portrait 2 (ONGC)",
+    "path": "tests/regression_data/ai_portrait_ongc_2.png",
+    "ground_truth": "AI",
+    "verdict": "LIKELY AI-GENERATED",
+    "label": "AI",
+    "primary_driver": "CIFAR_CNN",
+    "is_real": false,
+    "is_ai": true,
+    "is_ood": true,
+    "ood_score": 0.7857,
+    "raw_probabilities": {
+      "REAL": 0.0818,
+      "AI": 0.9182
+    },
+    "calibrated_confidence": 0.8461,
+    "confidence_percent": "84.6%",
+    "raw_score": 0.081841,
+    "architecture": "cifar_cnn (Native 32x32 Convolutional Neural Network)",
+    "correct": true
+  }
+]

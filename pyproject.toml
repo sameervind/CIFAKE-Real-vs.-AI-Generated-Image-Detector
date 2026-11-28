@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "cifake-detector"
 version = "1.0.0"
-description = "AI-Generated vs. Real Image Classification using ResNet50 Transfer Learning and 2D FFT Frequency Domain Analysis."
+description = "AI-Generated vs. Real Image Classification using Native CIFAR-CNN, Out-of-Distribution Detection, and Multi-Scale Forensic Analysis."
 readme = "README.md"
 authors = [
     { name = "CIFAKE Detection Team" }

@@ -86,6 +86,8 @@ Thumbs.db
 
 # Large dataset downloads & heavy weight checkpoints (keep repository lightweight)
 data/
+**/data/
+*.npy
 model/*.h5
 model/*.pth
 model/*.pt

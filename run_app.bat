@@ -3,7 +3,7 @@ REM Launcher script for CIFAKE Real vs. AI Image Detector // Lamborghini Forensi
 
 echo ========================================================
 echo   CIFAKE: Real vs. AI-Generated Image Detector
-echo   ResNet50 Transfer Learning + 2D FFT Frequency Studio
+echo   CIFAR-CNN Propulsion Engine + Multi-Scale Diagnostics
 echo   Design System: Lamborghini Automotive // Aceternity UI
 echo ========================================================
 echo.

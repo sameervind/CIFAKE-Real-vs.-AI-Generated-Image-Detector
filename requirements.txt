@@ -6,12 +6,15 @@ numpy>=1.26.0
 scipy>=1.12.0
 scikit-learn>=1.4.0
 opencv-python-headless>=4.9.0
-pillow>=10.0.0
+pillow>=10.0.0,<13.0.0
 pandas>=2.2.0
 
 # Visualization & Reporting
 matplotlib>=3.8.0
 seaborn>=0.13.0
+python-docx>=1.1.0
+python-pptx>=1.0.0
+reportlab>=4.0.0
 
 # Web Dashboard & REST API
 streamlit>=1.35.0

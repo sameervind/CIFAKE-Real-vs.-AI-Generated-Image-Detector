@@ -97,25 +97,47 @@
     "latency_ms_per_image": 0.976,
     "throughput_images_per_sec": 1024.8
   },
-  "ongc_regression_evaluation": {
+  "specimen_regression_evaluation": {
+    "verified_real_portrait_1.jpg": {
+      "ground_truth": "REAL",
+      "raw_sigmoid_score": 0.999645,
+      "raw_prob_real": 0.9996,
+      "raw_prob_ai": 0.0004,
+      "is_real": true,
+      "is_ai": false,
+      "verdict": "LIKELY REAL",
+      "primary_driver": "CIFAR_CNN",
+      "is_ood": true,
+      "ood_score": 0.8717,
+      "confidence": 0.912,
+      "regression_passed": true
+    },
     "ai_portrait_ongc_1.png": {
-      "raw_sigmoid_score": 0.058214,
+      "ground_truth": "AI",
+      "raw_sigmoid_score": 0.058170,
+      "raw_prob_real": 0.0582,
+      "raw_prob_ai": 0.9418,
       "is_real": false,
       "is_ai": true,
       "verdict": "LIKELY AI-GENERATED",
-      "primary_driver": "MODERN_FORENSICS",
+      "primary_driver": "CIFAR_CNN",
       "is_ood": true,
-      "confidence": 0.98,
+      "ood_score": 0.7925,
+      "confidence": 0.867,
       "regression_passed": true
     },
     "ai_portrait_ongc_2.png": {
-      "raw_sigmoid_score": 0.081841,
+      "ground_truth": "AI",
+      "raw_sigmoid_score": 0.081790,
+      "raw_prob_real": 0.0818,
+      "raw_prob_ai": 0.9182,
       "is_real": false,
       "is_ai": true,
       "verdict": "LIKELY AI-GENERATED",
-      "primary_driver": "MODERN_FORENSICS",
+      "primary_driver": "CIFAR_CNN",
       "is_ood": true,
-      "confidence": 0.8521,
+      "ood_score": 0.7857,
+      "confidence": 0.846,
       "regression_passed": true
     }
   }

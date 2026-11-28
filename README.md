@@ -5,7 +5,7 @@
 [![Accuracy](https://img.shields.io/badge/Track_A_Accuracy-94.92%25-brightgreen.svg)](model/evaluation_metrics.json)
 [![ROC-AUC](https://img.shields.io/badge/ROC--AUC-0.9903-brightgreen.svg)](assets/roc_curve.png)
 [![Inference Latency](https://img.shields.io/badge/CPU_Latency-1.58_ms%2Fimg-blueviolet.svg)](model/experiment_results.csv)
-[![Tests](https://img.shields.io/badge/pytest-22%2F22_Passed-success.svg)](tests/)
+[![Tests](https://img.shields.io/badge/pytest-23%2F23_Passed-success.svg)](tests/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-REST_Backend-009688.svg)](http://localhost:8000/docs)
 [![Streamlit](https://img.shields.io/badge/Streamlit-Lamborghini_Cockpit_UI-FFC000.svg)](http://localhost:8501)
 

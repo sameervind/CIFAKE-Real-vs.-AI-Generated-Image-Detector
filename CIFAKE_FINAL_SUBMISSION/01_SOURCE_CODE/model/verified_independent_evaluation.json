@@ -1,0 +1,144 @@
+{
+  "verification_timestamp": "2026-11-28 14:12:51 UTC",
+  "checkpoint": {
+    "path": "model\\best_cifake_model.keras",
+    "architecture": "cifar_cnn",
+    "parameters": 305953,
+    "file_size_mb": 3.62,
+    "input_shape": [
+      null,
+      32,
+      32,
+      3
+    ]
+  },
+  "dataset_split": {
+    "source": "Official CIFAKE Independent Test Partition",
+    "total_test_images": 20000,
+    "class_0_fake": 10000,
+    "class_1_real": 10000,
+    "partition_preservation": "Strictly unaugmented and isolated from train/val splits"
+  },
+  "metrics": {
+    "accuracy": 0.9492,
+    "accuracy_percent": 94.92,
+    "macro_precision": 0.949418,
+    "macro_recall": 0.9492,
+    "macro_f1": 0.949194,
+    "roc_auc": 0.990258,
+    "pr_auc": 0.990708,
+    "binary_cross_entropy": 0.129781,
+    "total_correct": 18984,
+    "total_samples": 20000
+  },
+  "per_class": {
+    "class_0_ai_fake": {
+      "precision": 0.959305,
+      "recall": 0.9382,
+      "f1": 0.948635,
+      "support": 10000
+    },
+    "class_1_real": {
+      "precision": 0.93953,
+      "recall": 0.9602,
+      "f1": 0.949753,
+      "support": 10000
+    }
+  },
+  "confusion_matrix": {
+    "tn_ai_correct": 9382,
+    "fp_ai_as_real": 618,
+    "fn_real_as_ai": 398,
+    "tp_real_correct": 9602,
+    "matrix": [
+      [
+        9382,
+        618
+      ],
+      [
+        398,
+        9602
+      ]
+    ]
+  },
+  "prediction_distribution_diagnostic": {
+    "mean_prob_true_real": 0.9437,
+    "std_prob_true_real": 0.1638,
+    "mean_prob_true_ai": 0.0839,
+    "std_prob_true_ai": 0.1965,
+    "class_separation_margin": 0.8597,
+    "percentiles_0_10_25_50_75_90_100": [
+      0.0,
+      0.0006,
+      0.0064,
+      0.5981,
+      0.9986,
+      0.9999,
+      1.0
+    ],
+    "histogram_10_bins": {
+      "[0.0-0.1)": 8381,
+      "[0.1-0.2)": 611,
+      "[0.2-0.3)": 342,
+      "[0.3-0.4)": 253,
+      "[0.4-0.5)": 193,
+      "[0.5-0.6)": 225,
+      "[0.6-0.7)": 260,
+      "[0.7-0.8)": 265,
+      "[0.8-0.9)": 469,
+      "[0.9-1.0)": 9001
+    },
+    "ratio_predicted_real": 0.511,
+    "ratio_predicted_ai": 0.489,
+    "is_collapsed": false
+  },
+  "cpu_latency": {
+    "total_time_seconds": 19.52,
+    "latency_ms_per_image": 0.976,
+    "throughput_images_per_sec": 1024.8
+  },
+  "specimen_regression_evaluation": {
+    "verified_real_portrait_1.jpg": {
+      "ground_truth": "REAL",
+      "raw_sigmoid_score": 0.999645,
+      "raw_prob_real": 0.9996,
+      "raw_prob_ai": 0.0004,
+      "is_real": true,
+      "is_ai": false,
+      "verdict": "LIKELY REAL",
+      "primary_driver": "CIFAR_CNN",
+      "is_ood": true,
+      "ood_score": 0.8717,
+      "confidence": 0.912,
+      "regression_passed": true
+    },
+    "ai_portrait_ongc_1.png": {
+      "ground_truth": "AI",
+      "raw_sigmoid_score": 0.058170,
+      "raw_prob_real": 0.0582,
+      "raw_prob_ai": 0.9418,
+      "is_real": false,
+      "is_ai": true,
+      "verdict": "LIKELY AI-GENERATED",
+      "primary_driver": "CIFAR_CNN",
+      "is_ood": true,
+      "ood_score": 0.7925,
+      "confidence": 0.867,
+      "regression_passed": true
+    },
+    "ai_portrait_ongc_2.png": {
+      "ground_truth": "AI",
+      "raw_sigmoid_score": 0.081790,
+      "raw_prob_real": 0.0818,
+      "raw_prob_ai": 0.9182,
+      "is_real": false,
+      "is_ai": true,
+      "verdict": "LIKELY AI-GENERATED",
+      "primary_driver": "CIFAR_CNN",
+      "is_ood": true,
+      "ood_score": 0.7857,
+      "confidence": 0.846,
+      "regression_passed": true
+    }
+  }
+}

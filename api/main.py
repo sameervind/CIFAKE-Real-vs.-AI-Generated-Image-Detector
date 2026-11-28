@@ -89,13 +89,19 @@ class HealthResponse(BaseModel):
 
 @app.get("/", summary="Root Endpoint")
 def read_root():
-    service = get_inference_service()
+    try:
+        service = get_inference_service()
+        loaded = service.is_model_loaded()
+        backend = service.active_backend
+    except ModelUnavailableError:
+        loaded = False
+        backend = "None (Checkpoint unavailable)"
     return {
         "title": "CIFAKE AI vs. Real Image Detection API",
         "version": "2.0.0",
         "status": "online",
-        "model_loaded": service.is_model_loaded(),
-        "backend": service.active_backend,
+        "model_loaded": loaded,
+        "backend": backend,
         "documentation": "/docs",
         "health": "/health",
         "metrics": "/metrics",
@@ -106,9 +112,17 @@ def read_root():
 
 @app.get("/health", response_model=HealthResponse, summary="Service Health Check")
 def get_health():
-    service = get_inference_service()
-    model_loaded = service.is_model_loaded()
-    model_path = str(service.model_path) if service.model_path else "None"
+    try:
+        service = get_inference_service()
+        model_loaded = service.is_model_loaded()
+        model_path = str(service.model_path) if service.model_path else "None"
+        backend = service.active_backend
+        in_shape = list(service.input_shape) if hasattr(service, "input_shape") and service.input_shape else [32, 32, 3]
+    except ModelUnavailableError:
+        model_loaded = False
+        model_path = str(MODEL_DIR / "best_cifake_model.keras")
+        backend = "None (Checkpoint unavailable)"
+        in_shape = [32, 32, 3]
     
     # Check TensorFlow availability
     try:
@@ -117,12 +131,10 @@ def get_health():
     except Exception:
         framework_str = "TensorFlow Unavailable"
 
-    in_shape = list(service.input_shape) if hasattr(service, "input_shape") and service.input_shape else [32, 32, 3]
-
     return {
         "status": "healthy" if model_loaded else "degraded",
         "version": "2.0.0",
-        "backend": service.active_backend,
+        "backend": backend,
         "model_loaded": model_loaded,
         "model_path": model_path,
         "framework": framework_str,

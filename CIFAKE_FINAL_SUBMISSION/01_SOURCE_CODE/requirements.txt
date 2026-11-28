@@ -1,0 +1,28 @@
+# CIFAKE Real vs. AI-Generated Image Classification
+# Core Deep Learning & Numerical Frameworks
+tensorflow>=2.15.0; sys_platform != "darwin" or platform_machine != "arm64"
+tensorflow-macos>=2.15.0; sys_platform == "darwin" and platform_machine == "arm64"
+numpy>=1.26.0
+scipy>=1.12.0
+scikit-learn>=1.4.0
+opencv-python-headless>=4.9.0
+pillow>=10.0.0,<13.0.0
+pandas>=2.2.0
+
+# Visualization & Reporting
+matplotlib>=3.8.0
+seaborn>=0.13.0
+python-docx>=1.1.0
+python-pptx>=1.0.0
+reportlab>=4.0.0
+
+# Web Dashboard & REST API
+streamlit>=1.35.0
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
+requests>=2.31.0
+httpx>=0.27.0
+
+# Testing & Quality Assurance
+pytest>=8.0.0
