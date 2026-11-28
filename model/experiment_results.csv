@@ -1,0 +1,4 @@
+Model,Architecture,Parameters,Resolution,Test Accuracy,Macro F1,Recall Fake (AI),Recall Real,ROC-AUC,CPU Latency (ms),Status
+CIFAR_CNN,6-Layer Deep ConvNet + GAP,305953,32x32,0.9492,0.9492,0.9382,0.9602,0.9903,1.58,Production Winner
+CIFAR_ResNet20,He et al. 20-Layer Residual,283137,32x32,0.9223,0.9221,0.931,0.9135,0.974,2.45,Benchmark Candidate
+ResNet50_ImageNet,ResNet-50 Transfer Learning,24146305,224x224 (Upsampled),0.9228,0.9224,0.954,0.8917,0.9742,42.1,Legacy Baseline

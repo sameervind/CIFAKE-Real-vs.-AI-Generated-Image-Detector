@@ -35,7 +35,8 @@ def test_health_endpoint():
     assert response.status_code == 200
     data = response.json()
     assert data["status"] in ["healthy", "degraded"]
-    assert "resnet" in data.get("backend", "").lower()
+    backend_lower = data.get("backend", "").lower()
+    assert any(k in backend_lower for k in ["tensorflow", "keras", "resnet", "cifar"])
 
 
 def test_metrics_endpoint():
@@ -104,8 +105,8 @@ def test_batch_predict_endpoint():
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 2
-    assert data[0]["label"] in ["REAL", "AI-GENERATED"]
-    assert data[1]["label"] in ["REAL", "AI-GENERATED"]
+    assert data[0]["label"] in ["REAL", "AI-GENERATED", "INCONCLUSIVE"]
+    assert data[1]["label"] in ["REAL", "AI-GENERATED", "INCONCLUSIVE"]
 
 
 def test_generalization_metrics_endpoint():

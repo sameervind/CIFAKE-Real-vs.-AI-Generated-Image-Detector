@@ -337,3 +337,95 @@ def create_tf_data_pipeline(
     ds = ds.batch(batch_size)
     ds = ds.prefetch(buffer_size=tf.data.AUTOTUNE)
     return ds
+
+
+CIFAKE_NATIVE_SHAPE = (32, 32, 3)
+
+
+def load_cifake_cache(
+    cache_dir: Union[str, Path] = "data/cifake_cache",
+    val_ratio: float = 0.2,
+    seed: int = 42
+) -> Tuple[Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]]:
+    """
+    Load authoritative CIFAKE dataset from cached numpy memory-mapped arrays.
+    Applies genuine stratified split to the 100,000 training images to create
+    reproducible Train and Validation partitions, keeping the 20,000 official Test split untouched.
+
+    Returns:
+        (X_train, y_train), (X_val, y_val), (X_test, y_test)
+        where images are shape (N, 32, 32, 3) uint8 and labels are shape (N,) int32.
+    """
+    from sklearn.model_selection import train_test_split
+
+    cache_path = Path(cache_dir)
+    train_img_path = cache_path / "train_images.npy"
+    train_lbl_path = cache_path / "train_labels.npy"
+    test_img_path = cache_path / "test_images.npy"
+    test_lbl_path = cache_path / "test_labels.npy"
+
+    if not all(p.exists() for p in [train_img_path, train_lbl_path, test_img_path, test_lbl_path]):
+        raise FileNotFoundError(
+            f"Cached CIFAKE numpy files not found in {cache_dir}. "
+            "Please ensure data/cifake_cache contains train_images.npy, train_labels.npy, etc."
+        )
+
+    # Load arrays
+    X_train_full = np.load(str(train_img_path))
+    y_train_full = np.load(str(train_lbl_path))
+    X_test = np.load(str(test_img_path))
+    y_test = np.load(str(test_lbl_path))
+
+    # Stratified split for train vs validation
+    indices = np.arange(len(y_train_full))
+    idx_train, idx_val = train_test_split(
+        indices,
+        test_size=val_ratio,
+        stratify=y_train_full,
+        random_state=seed
+    )
+
+    X_train, y_train = X_train_full[idx_train], y_train_full[idx_train]
+    X_val, y_val = X_train_full[idx_val], y_train_full[idx_val]
+
+    return (X_train, y_train), (X_val, y_val), (X_test, y_test)
+
+
+def create_cifake_native_tf_dataset(
+    images: np.ndarray,
+    labels: np.ndarray,
+    batch_size: int = 128,
+    is_training: bool = False,
+    augment: bool = True,
+    seed: int = 42
+):
+    """
+    Construct high-throughput tf.data pipeline for native 32x32 images.
+    Keeps images in uint8 until GPU/CPU tensor graph to minimize RAM bandwidth.
+    Applies training-only conservative spatial data augmentation (horizontal flip, random crop).
+    """
+    if not TF_AVAILABLE:
+        raise ImportError("TensorFlow is required to construct tf.data pipelines.")
+
+    ds = tf.data.Dataset.from_tensor_slices((images, labels))
+
+    if is_training:
+        ds = ds.shuffle(buffer_size=min(len(images), 20000), seed=seed, reshuffle_each_iteration=True)
+
+    def preprocess_tensor(img, lbl):
+        # Cast to float32 [0, 255] for augmentation / scaling
+        img = tf.cast(img, tf.float32)
+
+        if is_training and augment:
+            # Random horizontal flip
+            img = tf.image.random_flip_left_right(img)
+            # 4-pixel reflection pad and random crop back to 32x32
+            img = tf.pad(img, [[4, 4], [4, 4], [0, 0]], mode="REFLECT")
+            img = tf.image.random_crop(img, [32, 32, 3])
+
+        return img, tf.cast(lbl, tf.float32)
+
+    ds = ds.map(preprocess_tensor, num_parallel_calls=tf.data.AUTOTUNE)
+    ds = ds.batch(batch_size)
+    ds = ds.prefetch(buffer_size=tf.data.AUTOTUNE)
+    return ds

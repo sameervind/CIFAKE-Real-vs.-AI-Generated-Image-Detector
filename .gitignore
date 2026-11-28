@@ -85,9 +85,7 @@ Thumbs.db
 *.sqlite3
 
 # Large dataset downloads & heavy weight checkpoints (keep repository lightweight)
-data/cifake/*.zip
-data/cifake/*.tar.gz
-data/raw/
+data/
 model/*.keras
 model/*.h5
 model/*.pth

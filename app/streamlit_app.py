@@ -1027,20 +1027,44 @@ def page_architecture():
     """Model Benchmarks and Deep Residual Architecture specifications."""
     st.markdown('<div class="lambo-spotlight"></div>', unsafe_allow_html=True)
     
-    st.markdown("""
+    # Load model metadata if available
+    metadata = {}
+    meta_path = MODEL_DIR / "model_metadata.json"
+    if meta_path.exists():
+        try:
+            with open(meta_path, "r") as f:
+                metadata = json.load(f)
+        except Exception:
+            pass
+
+    active_model_name = metadata.get("model_name", "RESNET-50 / CIFAR RESIDUAL").upper()
+    active_params = f"{metadata.get('parameters', 24146305):,}" if "parameters" in metadata else "N/A"
+    in_res = metadata.get("input_resolution", [32, 32, 3])
+    latency_val = f"{metadata.get('cpu_latency_ms', 12.5):.2f} ms" if "cpu_latency_ms" in metadata else "N/A"
+
+    st.markdown(f"""
     <div class="lambo-badge">
-        <span>RESNET-50 DEEP RESIDUAL SUITE // BENCHMARKS</span>
+        <span>CIFAKE TRACK A BENCHMARK // {active_model_name}</span>
     </div>
-    <div class="lambo-hero-title">MODEL SPECIFICATIONS & TELEMETRY</div>
-    <div class="lambo-hero-subtitle">SYSTEM EVALUATION ON 12,000 CIFAKE TEST BENCHMARK IMAGES.</div>
+    <div class="lambo-hero-title">MODEL ARCHITECTURE & BENCHMARKS</div>
+    <div class="lambo-hero-subtitle">SYSTEM EVALUATION ON 20,000 INDEPENDENT CIFAKE TEST BENCHMARK IMAGES.</div>
     """, unsafe_allow_html=True)
 
     metrics = load_metrics_data()
 
     st.markdown(f"""
-    <div style="margin-bottom: 20px;">
+    <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
         <span class="lambo-sub-nav-chip" style="color: #FFC000; border-color: #FFC000; font-size: 11px;">
-            VERIFIED SOURCE: {metrics.get('source_label', 'BENCHMARK REFERENCE')}
+            ACTIVE ENGINE: {active_model_name}
+        </span>
+        <span class="lambo-sub-nav-chip" style="color: #29ABE2; border-color: #29ABE2; font-size: 11px;">
+            PARAMETERS: {active_params}
+        </span>
+        <span class="lambo-sub-nav-chip" style="color: #10B981; border-color: #10B981; font-size: 11px;">
+            RESOLUTION: {in_res[0]}x{in_res[1]} NATIVE
+        </span>
+        <span class="lambo-sub-nav-chip" style="color: #CCCCCC; border-color: #555555; font-size: 11px;">
+            CPU LATENCY: {latency_val}
         </span>
     </div>
     """, unsafe_allow_html=True)
@@ -1078,10 +1102,30 @@ def page_architecture():
 
     st.markdown("---")
 
+    # Architecture Comparison Table if experiment_results.csv exists
+    exp_csv_path = MODEL_DIR / "experiment_results.csv"
+    if exp_csv_path.exists():
+        try:
+            df_exp = pd.read_csv(exp_csv_path)
+            st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
+            st.markdown('<div class="lambo-card-title">CIFAKE TRACK A // ARCHITECTURE BENCHMARK COMPARISON</div>', unsafe_allow_html=True)
+            st.dataframe(df_exp, use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+        except Exception:
+            pass
+
+    # Charts: Architecture Comparison & Confusion Matrix
+    arch_chart = ASSETS_DIR / "architecture_comparison.png"
+    if arch_chart.exists():
+        st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
+        st.markdown('<div class="lambo-card-title">BENCHMARK COMPARISON // TEST ACCURACY & METRICS</div>', unsafe_allow_html=True)
+        st.image(str(arch_chart), use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
     col_chart1, col_chart2 = st.columns(2)
     with col_chart1:
         st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
-        st.markdown('<div class="lambo-card-title">CONFUSION MATRIX // 12,000 TEST IMAGES</div>', unsafe_allow_html=True)
+        st.markdown('<div class="lambo-card-title">CONFUSION MATRIX // TEST BENCHMARK</div>', unsafe_allow_html=True)
         cm_path = ASSETS_DIR / "confusion_matrix.png"
         if cm_path.exists():
             st.image(str(cm_path), use_container_width=True)
@@ -1091,22 +1135,63 @@ def page_architecture():
 
     with col_chart2:
         st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
-        st.markdown('<div class="lambo-card-title">TRAINING & VALIDATION DYNAMICS</div>', unsafe_allow_html=True)
+        st.markdown('<div class="lambo-card-title">ROC & PR CURVES</div>', unsafe_allow_html=True)
+        roc_path = ASSETS_DIR / "roc_curve.png"
+        pr_path = ASSETS_DIR / "precision_recall_curve.png"
+        if roc_path.exists():
+            st.image(str(roc_path), use_container_width=True)
+        elif pr_path.exists():
+            st.image(str(pr_path), use_container_width=True)
+        else:
+            st.info("ROC curve available in assets.")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # Training Curves
+    acc_curve = ASSETS_DIR / "accuracy_curve.png"
+    loss_curve = ASSETS_DIR / "loss_curve.png"
+    if acc_curve.exists() and loss_curve.exists():
+        c_acc, c_loss = st.columns(2)
+        with c_acc:
+            st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
+            st.markdown('<div class="lambo-card-title">TRAINING & VALIDATION ACCURACY DYNAMICS</div>', unsafe_allow_html=True)
+            st.image(str(acc_curve), use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+        with c_loss:
+            st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
+            st.markdown('<div class="lambo-card-title">BINARY CROSS-ENTROPY LOSS DYNAMICS</div>', unsafe_allow_html=True)
+            st.image(str(loss_curve), use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+    else:
         curves_path = ASSETS_DIR / "accuracy_loss_curves.png"
         if curves_path.exists():
+            st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
+            st.markdown('<div class="lambo-card-title">TRAINING & VALIDATION DYNAMICS</div>', unsafe_allow_html=True)
             st.image(str(curves_path), use_container_width=True)
-        else:
-            st.info("Curves available in assets.")
-        st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
     st.markdown('<div class="lambo-card-title">CLASSIFICATION PERFORMANCE REPORT</div>', unsafe_allow_html=True)
+    
+    # Extract per-class metrics if available
+    per_class = metrics.get("per_class", {})
+    ai_prec = f"{per_class.get('AI', {}).get('precision', 0.90) * 100:.2f}%"
+    ai_rec = f"{per_class.get('AI', {}).get('recall', 0.95) * 100:.2f}%"
+    ai_f1 = f"{per_class.get('AI', {}).get('f1_score', 0.92) * 100:.2f}%"
+    ai_supp = f"{per_class.get('AI', {}).get('support', 10000):,}"
+
+    real_prec = f"{per_class.get('REAL', {}).get('precision', 0.95) * 100:.2f}%"
+    real_rec = f"{per_class.get('REAL', {}).get('recall', 0.89) * 100:.2f}%"
+    real_f1 = f"{per_class.get('REAL', {}).get('f1_score', 0.92) * 100:.2f}%"
+    real_supp = f"{per_class.get('REAL', {}).get('support', 10000):,}"
+
+    total_supp = f"{metrics.get('test_samples', 20000):,}" if "test_samples" in metrics else "20,000"
+
     df_metrics = pd.DataFrame({
-        "CLASS": ["AI (SYNTHETIC)", "REAL (CIFAR-10)", "MACRO AVERAGE", "WEIGHTED AVERAGE"],
-        "PRECISION": ["89.80%", "95.09%", "92.42%", "92.45%"],
-        "RECALL": ["95.40%", "89.17%", "92.30%", "92.28%"],
-        "F1-SCORE": ["92.52%", "92.03%", "92.24%", "92.28%"],
-        "SUPPORT": ["6,000", "6,000", "12,000", "12,000"]
+        "CLASS": ["AI (SYNTHETIC)", "REAL (CIFAR-10)", "MACRO AVERAGE", "OVERALL TEST ACCURACY"],
+        "PRECISION": [ai_prec, real_prec, f"{metrics['precision_macro'] * 100:.2f}%", f"{metrics['accuracy'] * 100:.2f}%"],
+        "RECALL": [ai_rec, real_rec, f"{metrics['recall_macro'] * 100:.2f}%", f"{metrics['accuracy'] * 100:.2f}%"],
+        "F1-SCORE": [ai_f1, real_f1, f"{metrics['f1_macro'] * 100:.2f}%", f"{metrics['f1_macro'] * 100:.2f}%"],
+        "SUPPORT": [ai_supp, real_supp, total_supp, total_supp]
     })
     st.table(df_metrics)
     st.markdown('</div>', unsafe_allow_html=True)

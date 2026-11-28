@@ -114,6 +114,8 @@ def get_health():
     except Exception:
         framework_str = "TensorFlow Unavailable"
 
+    in_shape = list(service.input_shape) if hasattr(service, "input_shape") and service.input_shape else [32, 32, 3]
+
     return {
         "status": "healthy" if model_loaded else "degraded",
         "version": "2.0.0",
@@ -121,7 +123,7 @@ def get_health():
         "model_loaded": model_loaded,
         "model_path": model_path,
         "framework": framework_str,
-        "input_resolution": list(TARGET_SIZE) + [3],
+        "input_resolution": in_shape,
         "device": "CPU (oneDNN Optimized)"
     }
 

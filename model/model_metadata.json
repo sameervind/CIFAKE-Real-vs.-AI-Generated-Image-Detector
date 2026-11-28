@@ -1,23 +1,25 @@
 {
-    "model_name": "ResNet50_CIFAKE",
-    "checkpoint_file": "resnet50_cifake.keras",
-    "trained_timestamp": "2026-11-27T17:48:15.412209",
-    "tensorflow_version": "2.22.0-rc1",
+    "model_name": "CIFAR_CNN",
+    "checkpoint_file": "best_cifake_model.keras",
     "input_resolution": [
-        224,
-        224,
+        32,
+        32,
         3
     ],
+    "trained_timestamp": "2026-11-28T07:31:17.503872",
+    "tensorflow_version": "2.22.0-rc1",
+    "hardware": "CPU (oneDNN Optimized)",
+    "parameters": 305953,
     "class_mapping": {
         "0": "AI",
         "1": "REAL"
     },
-    "stage_a_epochs_completed": 2,
-    "stage_b_epochs_completed": 1,
-    "total_epochs": 3,
-    "train_samples": 13,
-    "val_samples": 5,
-    "test_samples": 2,
-    "final_test_accuracy": 1.0,
-    "final_test_roc_auc": 1.0
+    "epochs_trained": 6,
+    "train_samples": 80000,
+    "val_samples": 20000,
+    "test_samples": 20000,
+    "final_test_accuracy": 0.9492,
+    "final_test_macro_f1": 0.9492,
+    "final_test_roc_auc": 0.9903,
+    "cpu_latency_ms": 1.579
 }

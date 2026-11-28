@@ -301,6 +301,116 @@ def plot_precision_recall_curve(y_true: np.ndarray, y_pred_probs: np.ndarray, sa
     return save_path
 
 
+def plot_accuracy_curve(history: Dict[str, list], save_path: Optional[str] = None) -> str:
+    """Plot and save training & validation accuracy over epochs."""
+    if save_path is None:
+        save_path = str(ASSETS_DIR / "accuracy_curve.png")
+
+    epochs = range(1, len(history.get("accuracy", [])) + 1)
+    if not epochs:
+        epochs = range(1, 2)
+
+    fig, ax = plt.subplots(figsize=(7, 4.5), dpi=150)
+    fig.patch.set_facecolor('#000000')
+    ax.set_facecolor('#101010')
+
+    ax.plot(epochs, history.get("accuracy", [1.0]), color="#FFC000", marker="o", lw=2.5, label="TRAINING ACCURACY")
+    ax.plot(epochs, history.get("val_accuracy", [1.0]), color="#29ABE2", marker="s", lw=2.5, label="VALIDATION ACCURACY")
+    ax.set_title("CIFAKE BENCHMARK // ACCURACY CURVE", fontsize=11, fontweight="bold", color="#FFFFFF", pad=12)
+    ax.set_xlabel("EPOCH", fontsize=9, fontweight="bold", color="#CCCCCC")
+    ax.set_ylabel("ACCURACY", fontsize=9, fontweight="bold", color="#CCCCCC")
+    ax.set_ylim([0.7, 1.02])
+    ax.legend(facecolor="#181818", edgecolor="#282828", labelcolor="#FFFFFF", fontsize=9)
+    ax.grid(True, linestyle="--", alpha=0.25, color="#555555")
+    ax.tick_params(colors="#CCCCCC")
+
+    plt.tight_layout()
+    plt.savefig(save_path, facecolor=fig.get_facecolor(), edgecolor="none", bbox_inches="tight")
+    plt.close()
+    return save_path
+
+
+def plot_loss_curve(history: Dict[str, list], save_path: Optional[str] = None) -> str:
+    """Plot and save training & validation loss over epochs."""
+    if save_path is None:
+        save_path = str(ASSETS_DIR / "loss_curve.png")
+
+    epochs = range(1, len(history.get("loss", [])) + 1)
+    if not epochs:
+        epochs = range(1, 2)
+
+    fig, ax = plt.subplots(figsize=(7, 4.5), dpi=150)
+    fig.patch.set_facecolor('#000000')
+    ax.set_facecolor('#101010')
+
+    ax.plot(epochs, history.get("loss", [0.0]), color="#f43f5e", marker="o", lw=2.5, label="TRAINING LOSS")
+    ax.plot(epochs, history.get("val_loss", [0.0]), color="#a855f7", marker="s", lw=2.5, label="VALIDATION LOSS")
+    ax.set_title("CIFAKE BENCHMARK // BINARY CROSS-ENTROPY LOSS", fontsize=11, fontweight="bold", color="#FFFFFF", pad=12)
+    ax.set_xlabel("EPOCH", fontsize=9, fontweight="bold", color="#CCCCCC")
+    ax.set_ylabel("LOSS", fontsize=9, fontweight="bold", color="#CCCCCC")
+    ax.legend(facecolor="#181818", edgecolor="#282828", labelcolor="#FFFFFF", fontsize=9)
+    ax.grid(True, linestyle="--", alpha=0.25, color="#555555")
+    ax.tick_params(colors="#CCCCCC")
+
+    plt.tight_layout()
+    plt.savefig(save_path, facecolor=fig.get_facecolor(), edgecolor="none", bbox_inches="tight")
+    plt.close()
+    return save_path
+
+
+def plot_architecture_comparison(
+    results_list: List[Dict[str, Any]],
+    save_path: Optional[str] = None
+) -> str:
+    """
+    Generate side-by-side benchmark comparison chart across tested neural network architectures.
+    Visualizes Accuracy, Macro F1, Recall Real, Recall Fake, and Latency.
+    """
+    if save_path is None:
+        save_path = str(ASSETS_DIR / "architecture_comparison.png")
+
+    if not results_list:
+        return save_path
+
+    names = [r["model_name"] for r in results_list]
+    accuracies = [r.get("accuracy", 0.0) * 100 for r in results_list]
+    f1_scores = [r.get("f1_macro", 0.0) * 100 for r in results_list]
+    rec_fakes = [r.get("per_class", {}).get("AI", {}).get("recall", 0.0) * 100 for r in results_list]
+    rec_reals = [r.get("per_class", {}).get("REAL", {}).get("recall", 0.0) * 100 for r in results_list]
+
+    x = np.arange(len(names))
+    width = 0.20
+
+    fig, ax = plt.subplots(figsize=(9, 5), dpi=150)
+    fig.patch.set_facecolor('#000000')
+    ax.set_facecolor('#101010')
+
+    rects1 = ax.bar(x - 1.5 * width, accuracies, width, label='Test Accuracy', color='#FFC000', edgecolor='#282828')
+    rects2 = ax.bar(x - 0.5 * width, f1_scores, width, label='Macro F1', color='#29ABE2', edgecolor='#282828')
+    rects3 = ax.bar(x + 0.5 * width, rec_fakes, width, label='AI/Fake Recall', color='#A855F7', edgecolor='#282828')
+    rects4 = ax.bar(x + 1.5 * width, rec_reals, width, label='Real Recall', color='#10B981', edgecolor='#282828')
+
+    ax.set_ylabel('SCORE (%)', fontsize=10, fontweight='bold', color='#CCCCCC')
+    ax.set_title('CIFAKE ARCHITECTURE BENCHMARK // INDEPENDENT TEST COMPARISON', fontsize=11, fontweight='bold', color='#FFFFFF', pad=14)
+    ax.set_xticks(x)
+    ax.set_xticklabels(names, fontsize=9, fontweight='bold', color='#FFFFFF')
+    ax.set_ylim([70, 102])
+    ax.legend(loc='lower right', facecolor='#181818', edgecolor='#282828', labelcolor='#FFFFFF', fontsize=8)
+    ax.grid(True, linestyle='--', alpha=0.25, color='#555555', axis='y')
+    ax.tick_params(colors='#CCCCCC')
+
+    for rect in rects1:
+        h = rect.get_height()
+        ax.annotate(f'{h:.1f}%', xy=(rect.get_x() + rect.get_width() / 2, h),
+                    xytext=(0, 3), textcoords="offset points", ha='center', va='bottom',
+                    fontsize=7, color='#FFC000', fontweight='bold')
+
+    plt.tight_layout()
+    plt.savefig(save_path, facecolor=fig.get_facecolor(), edgecolor='none', bbox_inches='tight')
+    plt.close()
+    return save_path
+
+
 def plot_training_curves(history: Dict[str, list], save_path: Optional[str] = None) -> str:
     """Plot training & validation accuracy and loss over epochs."""
     if save_path is None:
