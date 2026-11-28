@@ -2,7 +2,7 @@
 FastAPI REST API for CIFAKE AI-Generated vs. Real Image Detection.
 Provides endpoints for single image inference, batch inference, model performance metrics,
 health checks, and sample library listings.
-Uses ResNet50 as the authoritative classifier with supplementary 2D Fourier/sensor noise diagnostics.
+Uses native CIFAR-CNN as the authoritative classifier with supplementary 2D Fourier/sensor noise diagnostics.
 Zero silent fallback.
 """
 
@@ -30,7 +30,7 @@ from src.predict import predict_image, get_inference_service
 
 app = FastAPI(
     title="CIFAKE AI vs. Real Image Detection API",
-    description="High-performance forensic classification API using ResNet50 Transfer Learning & 2D FFT Frequency Domain Analysis to detect synthetic diffusion images vs real photographs.",
+    description="High-performance classification API using native CIFAR-CNN & 2D FFT Frequency Domain Analysis to detect synthetic diffusion images vs real photographs.",
     version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -65,7 +65,10 @@ class PredictionResponse(BaseModel):
     confidence: float
     confidence_percent: str
     probabilities: Dict[str, float]
+    raw_probabilities: Optional[Dict[str, float]] = None
     backend: str
+    model_name: Optional[str] = None
+    architecture: Optional[str] = None
     decision_threshold: float
     artifacts: Dict[str, Any]
     explanation: str
@@ -218,7 +221,7 @@ async def predict_single(
             "filename": file.filename,
             "label": label_val,
             "verdict": result.get("verdict", label_val),
-            "primary_driver": result.get("primary_driver", "CIFAKE_RESNET50"),
+            "primary_driver": result.get("primary_driver", "CIFAR_CNN"),
             "is_ai": result["is_ai"],
             "is_real": result["is_real"],
             "is_ood": result.get("is_ood", False),
@@ -229,7 +232,10 @@ async def predict_single(
             "confidence": result["confidence"],
             "confidence_percent": result["confidence_percent"],
             "probabilities": result["probabilities"],
-            "backend": result.get("backend", "ResNet50"),
+            "raw_probabilities": result.get("raw_probabilities", result["probabilities"]),
+            "backend": result.get("backend", "tensorflow_keras"),
+            "model_name": result.get("model_name", "cifar_cnn"),
+            "architecture": result.get("architecture", "cifar_cnn (Native 32x32 Convolutional Neural Network)"),
             "decision_threshold": result.get("decision_threshold", threshold),
             "artifacts": _sanitize_artifacts(result.get("artifacts", {})),
             "explanation": result["explanation"],
@@ -244,7 +250,7 @@ async def predict_single(
     except ModelUnavailableError as mue:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"ResNet50 model unavailable: {str(mue)}. Train model using 'python -m src.train' before requesting inference."
+            detail=f"CIFAKE model unavailable: {str(mue)}. Train model using 'python -m src.train' before requesting inference."
         )
     except Exception as e:
         raise HTTPException(
@@ -272,7 +278,7 @@ async def predict_batch(
         except ModelUnavailableError as mue:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=f"ResNet50 model unavailable: {str(mue)}. Train model using 'python -m src.train' before batch inference."
+                detail=f"CIFAKE model unavailable: {str(mue)}. Train model using 'python -m src.train' before batch inference."
             )
 
     results = []
@@ -287,7 +293,7 @@ async def predict_batch(
                 "filename": file.filename,
                 "label": label_val,
                 "verdict": res.get("verdict", label_val),
-                "primary_driver": res.get("primary_driver", "CIFAKE_RESNET50"),
+                "primary_driver": res.get("primary_driver", "CIFAR_CNN"),
                 "is_ai": res["is_ai"],
                 "is_real": res["is_real"],
                 "is_ood": res.get("is_ood", False),
@@ -296,7 +302,10 @@ async def predict_batch(
                 "confidence": res["confidence"],
                 "confidence_percent": res["confidence_percent"],
                 "probabilities": res["probabilities"],
-                "backend": res.get("backend", "ResNet50"),
+                "raw_probabilities": res.get("raw_probabilities", res["probabilities"]),
+                "backend": res.get("backend", "tensorflow_keras"),
+                "model_name": res.get("model_name", "cifar_cnn"),
+                "architecture": res.get("architecture", "cifar_cnn (Native 32x32 Convolutional Neural Network)"),
                 "decision_threshold": res.get("decision_threshold", threshold),
                 "artifacts": _sanitize_artifacts(res.get("artifacts", {})),
                 "explanation": res["explanation"],

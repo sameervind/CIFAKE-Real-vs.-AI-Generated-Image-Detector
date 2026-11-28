@@ -2,10 +2,10 @@
 Inference module for CIFAKE AI vs. Real image prediction.
 
 Integrates:
-1. ResNet50 Transfer Learning Model (Deep residual benchmark classifier).
+1. Native CIFAR-CNN Benchmark Classifier (32x32 native convolutional architecture).
 2. Out-of-Distribution (OOD) & Uncertainty Engine (Manifold distance & scale shift).
-3. Modern Multi-Scale Forensic Analyzer (PRNU noise, kurtosis, plasticity, TCA).
-4. Independent 2D Fourier & spatial frequency diagnostics.
+3. Supplementary Modern Multi-Scale Optical Diagnostics (PRNU noise, kurtosis, plasticity, TCA).
+4. Supplementary 2D Fourier & spatial frequency diagnostics.
 5. Transparent Multi-Evidence Decision Arbiter.
 
 Strictly eliminates silent fallback behavior and overconfident false predictions.
@@ -139,10 +139,14 @@ def predict_image(
         "confidence_percent": decision.confidence_percent,
         "primary_driver": decision.primary_driver,
         "probabilities": decision.probabilities,
+        "raw_probabilities": decision.raw_probabilities,
+        "raw_confidence": pred_res["confidence"],
+        "raw_confidence_percent": pred_res["confidence_percent"],
         "raw_score": pred_res["raw_score"],
         "threshold": threshold,
         "backend": pred_res["backend"],
         "model_name": pred_res["model_name"],
+        "architecture": "cifar_cnn (Native 32x32 Convolutional Neural Network)",
         "model_version": Path(pred_res["checkpoint_path"]).name,
         "checkpoint_path": pred_res["checkpoint_path"],
         "is_ood": ood_res.is_ood,
@@ -160,9 +164,9 @@ def predict_image(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Predict whether an image is Real or AI-Generated using ResNet50.")
+    parser = argparse.ArgumentParser(description="Predict whether an image is Real or AI-Generated using CIFAKE Model.")
     parser.add_argument("image_path", type=str, help="Path to input image.")
-    parser.add_argument("--model", type=str, default=None, help="Path to trained ResNet50 checkpoint (.keras).")
+    parser.add_argument("--model", type=str, default=None, help="Path to trained model checkpoint (.keras).")
     parser.add_argument("--threshold", type=float, default=0.5, help="Decision boundary for REAL class (default: 0.50).")
     args = parser.parse_args()
 

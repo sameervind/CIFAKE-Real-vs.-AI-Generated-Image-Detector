@@ -309,10 +309,10 @@ def configure_fine_tuning(
     return model
 
 
-class ResNet50InferenceService:
+class CIFAKEInferenceService:
     """
-    Authoritative ResNet50 Model Inference Service.
-    Loads and caches the trained Keras model, performs verified preprocessing,
+    Authoritative CIFAKE Model Inference Service.
+    Loads and caches the trained Keras model (native CIFAR-CNN), performs verified preprocessing,
     and returns genuine calibrated neural network prediction probabilities.
     Never silently falls back to heuristic engines.
     """
@@ -461,7 +461,7 @@ class ResNet50InferenceService:
         class_id = 1 if is_real else 0
         class_name = "REAL" if is_real else "AI"
         confidence = real_prob if is_real else ai_prob
-        model_name = getattr(self.model, "name", "CIFAKE_Detector")
+        model_name = getattr(self.model, "name", "cifar_cnn")
 
         return {
             "label": class_name,
@@ -478,24 +478,25 @@ class ResNet50InferenceService:
             "threshold": threshold,
             "backend": "tensorflow_keras",
             "model_name": model_name,
+            "architecture": "cifar_cnn (Native 32x32 Convolutional Neural Network)",
             "checkpoint_path": self.model_path,
             "feature_embedding": feature_emb
         }
 
 
-# Type alias for backward compatibility
-CIFAKEInferenceService = ResNet50InferenceService
+# Backward compatibility aliases
+ResNet50InferenceService = CIFAKEInferenceService
 
 
 # Singleton service holder
-_GLOBAL_SERVICE: Optional[ResNet50InferenceService] = None
+_GLOBAL_SERVICE: Optional[CIFAKEInferenceService] = None
 
 
-def get_inference_service(model_path: Optional[str] = None, force_reload: bool = False) -> ResNet50InferenceService:
-    """Retrieve or initialize the singleton ResNet50 inference service."""
+def get_inference_service(model_path: Optional[str] = None, force_reload: bool = False) -> CIFAKEInferenceService:
+    """Retrieve or initialize the singleton CIFAKE inference service."""
     global _GLOBAL_SERVICE
     if _GLOBAL_SERVICE is None or force_reload:
-        _GLOBAL_SERVICE = ResNet50InferenceService(model_path=model_path)
+        _GLOBAL_SERVICE = CIFAKEInferenceService(model_path=model_path)
     return _GLOBAL_SERVICE
 
 

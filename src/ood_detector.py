@@ -137,8 +137,8 @@ class OODDetector:
         if scale_factor > 8.0:  # e.g., > 256x256
             spatial_ood_score = min(1.0, 0.40 + (scale_factor / 30.0) * 0.40)
             reasons.append(
-                f"High native resolution ({w}x{h}, {scale_factor:.1f}x CIFAKE benchmark): "
-                f"Severe downsampling obliterates forensic camera/diffusion artifacts."
+                f"High native resolution ({w}x{h}, {scale_factor:.1f}x CIFAKE benchmark scale): "
+                f"Input resolution significantly exceeds native 32x32 benchmark manifold."
             )
         elif scale_factor > 2.5:  # e.g., > 80x80
             spatial_ood_score = 0.25

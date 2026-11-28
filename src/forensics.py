@@ -21,21 +21,23 @@ from PIL import Image
 
 @dataclass
 class ForensicReport:
-    """Structured report detailing multi-scale forensic analysis."""
-    synthetic_probability: float  # [0.0, 1.0] probability image is AI-generated
-    real_probability: float       # [0.0, 1.0] probability image is physical photograph
-    is_synthetic_likely: bool     # True if forensic evidence indicates AI generation
-    confidence: float             # Forensic confidence
+    """Structured report detailing multi-scale forensic analysis (supplementary optical diagnostics)."""
     spectral_peak_ratio: float    # Peak to mean FFT energy ratio
     off_axis_max_power: float     # Off-axis 2D FFT synthetic harmonic power
     high_to_low_freq_ratio: float # High-frequency to low-frequency energy ratio
-    laplacian_kurtosis: float     # Gradient distribution kurtosis (synthetic > 15.0)
+    laplacian_kurtosis: float     # Gradient distribution kurtosis
     laplacian_variance: float     # Edge energy variance
     noise_residual_std: float     # High-pass sensor noise residual std
     plasticity_index: float       # Edge sharpness / flat micro-texture ratio
     chromatic_edge_diff: float    # R-B channel misalignment along edges
-    detected_anomalies: List[str] # List of specific forensic flags triggered
-    forensic_explanation: str     # Human-readable forensic summary
+    detected_anomalies: List[str] # Descriptive diagnostic notes
+    anomaly_count: int            # Total number of diagnostic anomaly flags
+    forensic_explanation: str     # Human-readable physical diagnostic summary
+    # Deprecated fields retained for serialization backward compatibility (NOT calibrated probabilities)
+    synthetic_probability: Optional[float] = None
+    real_probability: Optional[float] = None
+    is_synthetic_likely: bool = False
+    confidence: float = 0.0
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -73,7 +75,6 @@ class MultiScaleForensicAnalyzer:
         gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
 
         anomalies = []
-        anomaly_scores = []
 
         # -------------------------------------------------------------
         # 1. 2D FFT Spectral Analysis on Native Image
@@ -124,17 +125,15 @@ class MultiScaleForensicAnalyzer:
 
         if spectral_peak_ratio > self.spectral_peak_threshold:
             anomalies.append(
-                f"Spectral anomaly: Extreme Fourier peak-to-mean ratio ({spectral_peak_ratio:.2f} > {self.spectral_peak_threshold:.1f}) "
-                f"indicating periodic generative lattice artifacts."
+                f"Spectral flag: Elevated Fourier peak-to-mean ratio ({spectral_peak_ratio:.2f} > {self.spectral_peak_threshold:.1f}) "
+                f"suggests possible periodic lattice or sampling patterns."
             )
-            anomaly_scores.append(min(1.0, 0.40 + (spectral_peak_ratio - self.spectral_peak_threshold) * 0.10))
 
         if off_axis_power > self.off_axis_threshold and spectral_peak_ratio > 4.5:
             anomalies.append(
-                f"Off-axis frequency harmonic: ({off_axis_power:.3f} > {self.off_axis_threshold:.2f}) "
-                f"characteristic of neural upsampling deconvolution grids."
+                f"Off-axis frequency flag: ({off_axis_power:.3f} > {self.off_axis_threshold:.2f}) "
+                f"suggests possible diagonal upsampling harmonics."
             )
-            anomaly_scores.append(0.35)
 
         # -------------------------------------------------------------
         # 2. Laplacian Dispersion & Gradient Kurtosis
@@ -147,13 +146,10 @@ class MultiScaleForensicAnalyzer:
         lap_kurtosis = round(lap_kurtosis, 2)
 
         if lap_kurtosis > self.kurtosis_threshold:
-            excess = lap_kurtosis - self.kurtosis_threshold
-            score = min(1.0, 0.45 + (excess / 20.0) * 0.45)
             anomalies.append(
-                f"Heavy-tailed gradient kurtosis ({lap_kurtosis:.1f} > {self.kurtosis_threshold:.1f}): "
-                f"Artificial over-sharpening without natural photographic mid-frequency micro-texture."
+                f"Gradient kurtosis flag ({lap_kurtosis:.1f} > {self.kurtosis_threshold:.1f}): "
+                f"Heavy-tailed gradient distribution (may arise from synthetic edges or camera depth-of-field bokeh)."
             )
-            anomaly_scores.append(score)
 
         # -------------------------------------------------------------
         # 3. Sensor PRNU High-Pass Residual Analysis
@@ -179,13 +175,11 @@ class MultiScaleForensicAnalyzer:
         edge_sharpness = float(np.mean(grad_mag[edge_mask])) if np.sum(edge_mask) > 0 else 1.0
         plasticity_ratio = round(edge_sharpness / max(flat_micro_std, 1.0), 2)
 
-        # In native images, extreme plasticity indicates diffusion smoothing
         if plasticity_ratio > self.plasticity_threshold and min(h, w) > 64:
             anomalies.append(
-                f"Surface plasticity index ({plasticity_ratio:.1f} > {self.plasticity_threshold:.1f}): "
-                f"Synthetic surface oversmoothing coupled with disproportionately sharp boundary contrast."
+                f"Plasticity flag ({plasticity_ratio:.1f} > {self.plasticity_threshold:.1f}): "
+                f"High edge-to-flat ratio (common in both diffusion smoothing and studio portraits with blurred backgrounds)."
             )
-            anomaly_scores.append(min(1.0, 0.40 + (plasticity_ratio / 30.0) * 0.40))
 
         # -------------------------------------------------------------
         # 5. Transverse Chromatic Aberration (TCA) Check
@@ -196,38 +190,22 @@ class MultiScaleForensicAnalyzer:
         chromatic_edge_diff = round(float(np.mean(diff_rb[edge_mask])) if np.sum(edge_mask) > 0 else 0.0, 2)
 
         # -------------------------------------------------------------
-        # 6. Composite Forensic Verdict Formulation
+        # 6. Diagnostic Telemetry Summary (Non-Authoritative)
         # -------------------------------------------------------------
-        if anomaly_scores:
-            base_p = max(anomaly_scores)
-            extra = sum(s * 0.15 for s in anomaly_scores if s < base_p)
-            p_ai = min(0.95, base_p + extra)
-        else:
-            p_ai = 0.15 if min(h, w) > 64 else 0.35
-
-        p_real = round(1.0 - p_ai, 4)
-        p_ai = round(p_ai, 4)
-        is_synthetic = p_ai >= 0.50
-        confidence = p_ai if is_synthetic else p_real
-
-        # Formulate human-readable forensic summary
-        if is_synthetic:
+        if anomalies:
             explanation = (
-                f"Multi-scale forensic analyzer identified {len(anomalies)} physical generative anomaly signature(s). "
+                f"Supplementary optical diagnostics: {len(anomalies)} signal deviation(s) noted. "
                 f"Laplacian kurtosis={lap_kurtosis:.1f}, spectral peak ratio={spectral_peak_ratio:.2f}x, "
-                f"and surface plasticity={plasticity_ratio:.1f}. Physical camera optical noise signature is absent."
+                f"surface plasticity={plasticity_ratio:.1f}, PRNU noise std={noise_std:.2f}. "
+                f"Note: Optical diagnostics are supplementary observations, not a probabilistic AI verdict."
             )
         else:
             explanation = (
-                f"Multi-scale optical forensic signatures align with physical camera capture. "
-                f"Laplacian kurtosis={lap_kurtosis:.1f} and spectral profile exhibit natural photographic dispersion."
+                f"Supplementary optical diagnostics: Optical measurements align with typical photographic frequency profiles. "
+                f"Laplacian kurtosis={lap_kurtosis:.1f}, spectral peak ratio={spectral_peak_ratio:.2f}x."
             )
 
         return ForensicReport(
-            synthetic_probability=p_ai,
-            real_probability=p_real,
-            is_synthetic_likely=is_synthetic,
-            confidence=round(confidence, 4),
             spectral_peak_ratio=spectral_peak_ratio,
             off_axis_max_power=off_axis_power,
             high_to_low_freq_ratio=high_to_low_ratio,
@@ -237,7 +215,12 @@ class MultiScaleForensicAnalyzer:
             plasticity_index=plasticity_ratio,
             chromatic_edge_diff=chromatic_edge_diff,
             detected_anomalies=anomalies,
-            forensic_explanation=explanation
+            anomaly_count=len(anomalies),
+            forensic_explanation=explanation,
+            synthetic_probability=None,
+            real_probability=None,
+            is_synthetic_likely=False,
+            confidence=0.0
         )
 
     def _load_rgb(self, image_input: Union[str, np.ndarray, Image.Image]) -> np.ndarray:

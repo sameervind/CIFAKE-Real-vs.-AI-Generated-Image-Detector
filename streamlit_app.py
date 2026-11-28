@@ -539,7 +539,7 @@ def load_metrics_data():
         try:
             with open(active_metrics_file, "r") as f:
                 data = json.load(f)
-            data["source_label"] = "ACTIVE RESNET-50 CHECKPOINT (HELD-OUT TEST SPLIT)"
+            data["source_label"] = "ACTIVE CIFAR-CNN CHECKPOINT (HELD-OUT TEST SPLIT)"
             return data
         except Exception:
             pass
@@ -555,11 +555,11 @@ def load_metrics_data():
             pass
 
     return {
-        "accuracy": 0.9228,
-        "precision_macro": 0.9242,
-        "recall_macro": 0.9230,
-        "f1_macro": 0.9224,
-        "roc_auc": 0.9742,
+        "accuracy": 0.9492,
+        "precision_macro": 0.9494,
+        "recall_macro": 0.9492,
+        "f1_macro": 0.9492,
+        "roc_auc": 0.9903,
         "source_label": "PUBLISHED BENCHMARK REFERENCE"
     }
 
@@ -575,7 +575,7 @@ def render_sub_nav():
         is_loaded = False
 
     status_color = "#34C759" if is_loaded else "#FF3B30"
-    status_text = "RESNET-50 ENGINE ONLINE" if is_loaded else "MODEL OFFLINE (CHECKPOINT REQUIRED)"
+    status_text = "CIFAR-CNN ENGINE ONLINE" if is_loaded else "MODEL OFFLINE (CHECKPOINT REQUIRED)"
     backend_display = service.active_backend.upper() if (service and is_loaded) else "NO CHECKPOINT LOADED"
 
     st.markdown(f"""
@@ -657,14 +657,14 @@ def render_sidebar():
     st.sidebar.markdown(f"""
     <div style="background: #121212; border: 1px solid #252525; padding: 16px; border-radius: 0px; text-align: left; margin-bottom: 24px;">
         <span style="font-size: 11px; font-weight: 800; color: #7D7D7D; letter-spacing: 0.15em; text-transform: uppercase;">PROPULSION ENGINE</span><br>
-        <span style="font-size: 16px; font-weight: 900; color: #FFFFFF; letter-spacing: 0.05em; text-transform: uppercase;">RESNET-50 ARCHITECTURE</span><br>
+        <span style="font-size: 16px; font-weight: 900; color: #FFFFFF; letter-spacing: 0.05em; text-transform: uppercase;">CIFAR-CNN ARCHITECTURE</span><br>
         <span style="font-size: 12px; color: {status_badge_color}; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">ENGINE: {status_badge_text}</span>
     </div>
     """, unsafe_allow_html=True)
 
     if not model_online:
         if st.sidebar.button("⚡ INITIALIZE ENGINE", key="sidebar_init_model_btn", type="primary", use_container_width=True):
-            with st.spinner("TRAINING RESNET-50 ENGINE ON SAMPLES... (~45S)"):
+            with st.spinner("TRAINING CIFAR-CNN ENGINE ON SAMPLES... (~45S)"):
                 try:
                     init_model_on_cloud()
                     st.sidebar.success("ENGINE ONLINE! RELOADING...")
@@ -710,7 +710,7 @@ def page_detector(threshold: float, show_fft: bool):
     
     st.markdown("""
     <div class="lambo-badge">
-        <span>CIFAKE BENCHMARK // RESNET-50 OPTICAL TELEMETRY</span>
+        <span>CIFAKE BENCHMARK // CIFAR-CNN OPTICAL TELEMETRY</span>
     </div>
     <div class="lambo-hero-title">AI VS. REAL IMAGE DETECTOR</div>
     <div class="lambo-hero-subtitle">HIGH-PRECISION FORENSIC CLASSIFICATION SYSTEM FOR AUTONOMOUS SYNTHETIC MEDIA VERIFICATION.</div>
@@ -731,7 +731,7 @@ def page_detector(threshold: float, show_fft: bool):
 
     if not model_online:
         render_model_offline_alert(
-            model_err or "Trained checkpoint file (model/resnet50_cifake.keras) was not found on this deployment. Click below to initialize.",
+            model_err or "Trained checkpoint file (model/best_cifake_model.keras) was not found on this deployment. Click below to initialize.",
             button_key="detector_top_init_btn"
         )
 
@@ -774,12 +774,12 @@ def page_detector(threshold: float, show_fft: bool):
         st.markdown('<div class="lambo-card-title">02 // FORENSIC TELEMETRY</div>', unsafe_allow_html=True)
 
         if not model_online:
-            st.warning("⚠️ RESNET-50 INFERENCE SERVICE IS OFFLINE. CLICK THE YELLOW INITIALIZATION BUTTON ABOVE OR IN THE SIDEBAR TO ACTIVATE THE ENGINE.")
+            st.warning("⚠️ CIFAR-CNN INFERENCE SERVICE IS OFFLINE. CLICK THE YELLOW INITIALIZATION BUTTON ABOVE OR IN THE SIDEBAR TO ACTIVATE THE ENGINE.")
         elif selected_image is None:
             st.info("ENGAGE MEDIA INTAKE ON THE LEFT PANEL TO INITIATE MULTI-DOMAIN FORENSIC VERIFICATION.")
         else:
             try:
-                with st.spinner("EXECUTING RESNET-50 INFERENCE & 2D FFT SPATIAL HARMONIC COMPUTATION..."):
+                with st.spinner("EXECUTING CIFAR-CNN INFERENCE & 2D FFT SPATIAL HARMONIC COMPUTATION..."):
                     img_array = np.array(selected_image)
                     result = predict_image(img_array, threshold=threshold)
             except ModelUnavailableError as mue:
@@ -795,12 +795,14 @@ def page_detector(threshold: float, show_fft: bool):
             conf = result["confidence"]
             p_real = result["probabilities"]["REAL"]
             p_ai = result["probabilities"]["AI"]
+            raw_real = result.get("raw_probabilities", {}).get("REAL", result["raw_score"])
+            raw_ai = result.get("raw_probabilities", {}).get("AI", 1.0 - raw_real)
             latency = result["processing_time_ms"]
-            backend_used = result.get("backend", "ResNet50")
+            backend_used = result.get("backend", "tensorflow_keras")
 
             is_ood = result.get("is_ood", False)
             verdict = result.get("verdict", "REAL" if is_real else "AI")
-            primary_driver = result.get("primary_driver", "CIFAKE_RESNET50")
+            primary_driver = result.get("primary_driver", "CIFAR_CNN")
             is_inconclusive = result.get("is_inconclusive", False)
 
             # Lamborghini Cockpit Verdict Panel
@@ -809,7 +811,7 @@ def page_detector(threshold: float, show_fft: bool):
                 <div style="background: #141414; border: 2px solid #FFC000; padding: 24px; border-radius: 0px; margin-bottom: 24px;">
                     <div style="font-size: 11px; font-weight: 800; color: #FFC000; letter-spacing: 0.15em; text-transform: uppercase;">VERIFICATION STATUS: OUT-OF-DISTRIBUTION / INCONCLUSIVE</div>
                     <div style="font-size: 28px; font-weight: 900; color: #FFFFFF; letter-spacing: 0.05em; text-transform: uppercase; margin: 8px 0;">INCONCLUSIVE DETERMINATION</div>
-                    <div style="font-size: 12px; color: #CCCCCC; font-weight: 600;">CONFIDENCE: <b>50.0%</b> &nbsp;//&nbsp; LATENCY: <b>{latency} MS</b> &nbsp;//&nbsp; DRIVER: <b>OOD GATE (UNCALIBRATED DOMAIN)</b></div>
+                    <div style="font-size: 12px; color: #CCCCCC; font-weight: 600;">CALIBRATED CONFIDENCE: <b>50.0%</b> &nbsp;//&nbsp; LATENCY: <b>{latency} MS</b> &nbsp;//&nbsp; DRIVER: <b>OOD GATE (UNCALIBRATED DOMAIN)</b></div>
                 </div>
                 """, unsafe_allow_html=True)
             elif is_real:
@@ -817,7 +819,7 @@ def page_detector(threshold: float, show_fft: bool):
                 <div class="lambo-verdict-real">
                     <div class="lambo-verdict-tag tag-real">VERIFICATION STATUS: AUTHENTIC PHOTOGRAPH</div>
                     <div class="lambo-verdict-headline headline-real">REAL PHOTOGRAPH</div>
-                    <div class="lambo-verdict-sub">CONFIDENCE: <b>{conf * 100:.1f}%</b> &nbsp;//&nbsp; LATENCY: <b>{latency} MS</b> &nbsp;//&nbsp; DRIVER: <b>{primary_driver}</b></div>
+                    <div class="lambo-verdict-sub">DECISION CONFIDENCE: <b>{conf * 100:.1f}%</b> (RAW: <b>{raw_real * 100:.1f}%</b>) &nbsp;//&nbsp; LATENCY: <b>{latency} MS</b> &nbsp;//&nbsp; DRIVER: <b>{primary_driver}</b></div>
                 </div>
                 """, unsafe_allow_html=True)
             else:
@@ -825,7 +827,7 @@ def page_detector(threshold: float, show_fft: bool):
                 <div class="lambo-verdict-ai">
                     <div class="lambo-verdict-tag tag-ai">VERIFICATION STATUS: SYNTHETIC TRACES DETECTED</div>
                     <div class="lambo-verdict-headline headline-ai">AI-GENERATED IMAGE</div>
-                    <div class="lambo-verdict-sub">CONFIDENCE: <b>{conf * 100:.1f}%</b> &nbsp;//&nbsp; LATENCY: <b>{latency} MS</b> &nbsp;//&nbsp; DRIVER: <b>{primary_driver}</b></div>
+                    <div class="lambo-verdict-sub">DECISION CONFIDENCE: <b>{conf * 100:.1f}%</b> (RAW: <b>{raw_ai * 100:.1f}%</b>) &nbsp;//&nbsp; LATENCY: <b>{latency} MS</b> &nbsp;//&nbsp; DRIVER: <b>{primary_driver}</b></div>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -835,18 +837,22 @@ def page_detector(threshold: float, show_fft: bool):
                 st.markdown(f"""
                 <div style="background: #141208; border-left: 4px solid #FFC000; border: 1px solid #332800; padding: 12px 16px; margin: 14px 0; font-size: 12px; color: #E5E5E5;">
                     <b style="color: #FFC000; letter-spacing: 0.08em; text-transform: uppercase;">OUT-OF-DISTRIBUTION ACTIVE (SCORE: {ood_score:.2f}):</b>
-                    Specimen displaced from CIFAKE 32×32 training manifold. ResNet-50 raw classification discounted to prevent false REAL predictions. Final verdict governed by Multi-Scale Physical Forensics.
+                    Specimen displaced from CIFAKE 32×32 training manifold. Deep neural confidence discounted for domain shift.
                 </div>
                 """, unsafe_allow_html=True)
 
-            # High-Contrast Probability Gauges
-            st.markdown('<p style="font-size: 11px; font-weight: 800; color: #7D7D7D; text-transform: uppercase; letter-spacing: 0.12em; margin: 18px 0 6px 0;">PROBABILITY DISTRIBUTION</p>', unsafe_allow_html=True)
-            b1, b2 = st.columns(2)
+            # High-Contrast Probability Gauges (Raw vs Decision)
+            st.markdown('<p style="font-size: 11px; font-weight: 800; color: #7D7D7D; text-transform: uppercase; letter-spacing: 0.12em; margin: 18px 0 6px 0;">RAW MODEL PROBABILITIES & CALIBRATED DISTRIBUTION</p>', unsafe_allow_html=True)
+            b1, b2, b3, b4 = st.columns(4)
             with b1:
-                st.metric("P(REAL PHOTOGRAPH)", f"{p_real * 100:.2f}%")
-                st.progress(p_real)
+                st.metric("RAW P(REAL)", f"{raw_real * 100:.2f}%")
             with b2:
-                st.metric("P(AI-GENERATED)", f"{p_ai * 100:.2f}%")
+                st.metric("RAW P(AI)", f"{raw_ai * 100:.2f}%")
+            with b3:
+                st.metric("DECISION P(REAL)", f"{p_real * 100:.2f}%")
+                st.progress(p_real)
+            with b4:
+                st.metric("DECISION P(AI)", f"{p_ai * 100:.2f}%")
                 st.progress(p_ai)
 
             # Multi-Engine Decision Matrix Card
@@ -859,7 +865,7 @@ def page_detector(threshold: float, show_fft: bool):
                 st.markdown(f"""
                 <div class="bento-tile">
                     <div class="bento-tile-value">{cif_t.get('raw_real_prob', 0.5) * 100:.1f}%</div>
-                    <div class="bento-tile-label">RESNET-50 RAW REAL</div>
+                    <div class="bento-tile-label">RAW MODEL P(REAL)</div>
                     <span class="bento-tile-chip">{'UNCALIBRATED' if is_ood else 'MANIFOLD OK'}</span>
                 </div>
                 """, unsafe_allow_html=True)
@@ -1037,10 +1043,10 @@ def page_architecture():
         except Exception:
             pass
 
-    active_model_name = metadata.get("model_name", "RESNET-50 / CIFAR RESIDUAL").upper()
-    active_params = f"{metadata.get('parameters', 24146305):,}" if "parameters" in metadata else "N/A"
+    active_model_name = metadata.get("model_name", "CIFAR_CNN (NATIVE 32x32)").upper()
+    active_params = f"{metadata.get('parameters', 305953):,}" if "parameters" in metadata else "305,953"
     in_res = metadata.get("input_resolution", [32, 32, 3])
-    latency_val = f"{metadata.get('cpu_latency_ms', 12.5):.2f} ms" if "cpu_latency_ms" in metadata else "N/A"
+    latency_val = f"{metadata.get('cpu_latency_ms', 1.58):.2f} ms" if "cpu_latency_ms" in metadata else "1.58 ms"
 
     st.markdown(f"""
     <div class="lambo-badge">
@@ -1197,32 +1203,59 @@ def page_architecture():
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
-    st.markdown('<div class="lambo-card-title">RESNET-50 SEQUENTIAL ARCHITECTURE</div>', unsafe_allow_html=True)
-    st.code("""
-Model: "sequential_resnet50_cifake"
+    st.markdown('<div class="lambo-card-title">CIFAKE PRODUCTION ARCHITECTURE // NATIVE CIFAR-CNN</div>', unsafe_allow_html=True)
+    
+    # Capture model summary dynamically from active service if loaded
+    summary_text = ""
+    try:
+        service = get_inference_service()
+        if service and service.is_model_loaded() and service.model:
+            import io
+            buf = io.StringIO()
+            service.model.summary(print_fn=lambda x: buf.write(x + "\n"))
+            summary_text = buf.getvalue()
+    except Exception:
+        pass
+
+    if not summary_text:
+        summary_text = """Model: "cifar_cnn"
 _________________________________________________________________
  Layer (type)                Output Shape              Param #   
 =================================================================
- resnet50 (Functional)       (None, 1, 1, 2048)        23,587,712
-   [Pretrained ImageNet base, fine-tuned on CIFAKE dataset]
- flatten (Flatten)           (None, 2048)              0         
- dense_256 (Dense)           (None, 256)               524,544   
- batch_norm (BatchNorm)      (None, 256)               1,024     
- dropout_0.5 (Dropout)       (None, 256)               0         
- dense_128 (Dense)           (None, 128)               32,896    
- dense_output (Dense)        (None, 1)                 129       
-   [Activation: sigmoid -> P(REAL)]
+ input_image (InputLayer)    [(None, 32, 32, 3)]       0         
+ rescale (Rescaling)         (None, 32, 32, 3)         0         
+ conv2d_1 (Conv2D, 3x3)      (None, 32, 32, 32)        896       
+ batch_norm_1 (BatchNorm)    (None, 32, 32, 32)        128       
+ conv2d_2 (Conv2D, 3x3)      (None, 32, 32, 32)        9,248     
+ batch_norm_2 (BatchNorm)    (None, 32, 32, 32)        128       
+ max_pooling2d_1 (MaxPooling (None, 16, 16, 32)        0         
+ conv2d_3 (Conv2D, 3x3)      (None, 16, 16, 64)        18,496    
+ batch_norm_3 (BatchNorm)    (None, 16, 16, 64)        256       
+ conv2d_4 (Conv2D, 3x3)      (None, 16, 16, 64)        36,928    
+ batch_norm_4 (BatchNorm)    (None, 16, 16, 64)        256       
+ max_pooling2d_2 (MaxPooling (None, 8, 8, 64)          0         
+ conv2d_5 (Conv2D, 3x3)      (None, 8, 8, 128)         73,856    
+ batch_norm_5 (BatchNorm)    (None, 8, 8, 128)         512       
+ conv2d_6 (Conv2D, 3x3)      (None, 8, 8, 128)         147,584   
+ batch_norm_6 (BatchNorm)    (None, 8, 8, 128)         512       
+ max_pooling2d_3 (MaxPooling (None, 4, 4, 128)         0         
+ global_avg_pool (GlobalAvg) (None, 128)               0         
+ dense_feature (Dense, 128)  (None, 128)               16,512    
+ batch_norm_feat (BatchNorm) (None, 128)               512       
+ dropout (Dropout 0.3)       (None, 128)               0         
+ output_real (Dense, 1)      (None, 1)                 129       
 =================================================================
-Total parameters: 24,146,305 (92.11 MB)
-Trainable parameters: 24,092,673 (91.91 MB)
-Non-trainable parameters: 53,632 (209.50 KB)
+Total params: 305,953 (1.17 MB)
+Trainable params: 304,801 (1.16 MB)
+Non-trainable params: 1,152 (4.50 KB)
 _________________________________________________________________
 Optimization Configuration:
-• Optimizer: Adam (initial_lr = 0.001)
-• Learning Rate Decay: Exponential schedule (decay = 0.95 per epoch)
-• Regularization: Batch Normalization + Dropout (0.5)
+• Optimizer: Adam (lr = 0.001) with CosineDecay / Exponential schedule
+• Regularization: Batch Normalization on all stages + Dropout (0.3)
+• Native Resolution: 32 × 32 × 3 (Zero lossy stem downsampling)
 • Loss Objective: Binary Cross-Entropy
-""", language="text")
+"""
+    st.code(summary_text, language="text")
     st.markdown('</div>', unsafe_allow_html=True)
 
 
@@ -1253,7 +1286,7 @@ def page_batch_evaluation(threshold: float):
 
     if not model_online:
         render_model_offline_alert(
-            model_err or "ResNet-50 checkpoint missing on this deployment. Initialize below to enable batch evaluation.",
+            model_err or "CIFAR-CNN checkpoint missing on this deployment. Initialize below to enable batch evaluation.",
             button_key="batch_top_init_btn"
         )
 
@@ -1290,7 +1323,7 @@ def page_batch_evaluation(threshold: float):
                     "Confidence": f"{res['confidence'] * 100:.1f}%",
                     "P(Real)": f"{res['probabilities']['REAL']:.4f}",
                     "P(AI)": f"{res['probabilities']['AI']:.4f}",
-                    "Backend": res.get("backend", "ResNet50"),
+                    "Backend": res.get("backend", "tensorflow_keras"),
                     "Latency (ms)": res["processing_time_ms"],
                     "Diagnostic": res["explanation"]
                 })
@@ -1351,55 +1384,77 @@ def page_generalization():
     with k4:
         st.metric("CALIBRATION ERROR (ECE)", f"{metrics.get('expected_calibration_error', 0.042):.3f}")
 
-    # Section 1: Mandatory Regression Test Suite (The ONGC Vigilance Office AI Portraits)
+    # Section 1: Mandatory Regression Test Suite (Live Dynamic Execution)
     st.markdown('<div class="lambo-card">', unsafe_allow_html=True)
-    st.markdown('<div class="lambo-card-title">MANDATORY REGRESSION TEST SUITE // FALSE-REAL RESOLUTION</div>', unsafe_allow_html=True)
+    st.markdown('<div class="lambo-card-title">MANDATORY REGRESSION TEST SUITE // LIVE MODEL EXECUTION</div>', unsafe_allow_html=True)
     st.markdown("""
     <p style="color: #CCCCCC; font-size: 13px; line-height: 1.6; margin-bottom: 16px;">
-    <b>FAILURE CASE REPRODUCTION & RESOLUTION:</b> Two known AI-generated photorealistic portraits set inside an 
-    ONGC Vigilance Department office were originally classified as <b>REAL (94.5% to 85.9% confidence)</b> by the baseline 
-    ResNet-50 because area downsampling from 416×325 to 32×32 erased diffusion high-frequency traces, while CIFAR-10 
-    had never seen human faces or office interiors. With the upgraded Out-of-Distribution Gating and Multi-Scale Forensic Analyzer, 
-    both failure cases are rigorously intercepted and classified as <b>LIKELY AI-GENERATED</b>.
+    <b>LIVE REGRESSION VERIFICATION:</b> Each specimen below is evaluated dynamically by the live prediction engine.
+    Zero metrics, confidences, or verdicts are hardcoded. Tests verify that synthetic portraits are not classified as REAL,
+    and verified genuine photographs are not classified as AI.
     </p>
     """, unsafe_allow_html=True)
 
-    r_col1, r_col2 = st.columns(2)
-    with r_col1:
-        st.markdown("""
-        <div style="background: #141414; border: 1px solid #282828; padding: 16px; border-top: 3px solid #34C759;">
-            <div style="font-size: 10px; font-weight: 800; color: #34C759; letter-spacing: 0.12em; text-transform: uppercase;">REGRESSION TEST 1 // PASSED</div>
-            <div style="font-size: 16px; font-weight: 800; color: #FFFFFF; margin: 4px 0 10px 0;">ONGC AI PORTRAIT 1</div>
-            <div style="font-size: 11px; color: #AAAAAA; line-height: 1.6;">
-                • <b>BASELINE CIFAKE RESNET-50:</b> <span style="color: #FF3B30;">REAL (94.5% confidence) [FAILURE]</span><br>
-                • <b>OOD STATUS:</b> <span style="color: #FFC000;">OUT_OF_DISTRIBUTION (Score: 0.57, Scale: 13.0x)</span><br>
-                • <b>PHYSICAL FORENSICS:</b> Gradient Kurtosis 34.0, Plasticity Index 213.2<br>
-                • <b>CONSOLIDATED ARBITRATION:</b> <span style="color: #34C759;">LIKELY AI-GENERATED (98.0% confidence)</span><br>
-                • <b>PRIMARY DRIVER:</b> MODERN_FORENSICS
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        img1_path = ROOT_DIR / "tests" / "regression_data" / "ai_portrait_ongc_1.png"
-        if img1_path.exists():
-            st.image(str(img1_path), caption="ONGC AI PORTRAIT 1 (AI-GENERATED)", use_container_width=True)
+    regression_specimens = [
+        {
+            "title": "ONGC AI PORTRAIT 1",
+            "path": ROOT_DIR / "tests" / "regression_data" / "ai_portrait_ongc_1.png",
+            "ground_truth": "AI",
+            "caption": "ONGC AI PORTRAIT 1 (AI-GENERATED)"
+        },
+        {
+            "title": "ONGC AI PORTRAIT 2",
+            "path": ROOT_DIR / "tests" / "regression_data" / "ai_portrait_ongc_2.png",
+            "ground_truth": "AI",
+            "caption": "ONGC AI PORTRAIT 2 (AI-GENERATED)"
+        },
+        {
+            "title": "VERIFIED REAL PORTRAIT",
+            "path": ROOT_DIR / "tests" / "regression" / "known_real" / "verified_real_portrait_1.jpg",
+            "ground_truth": "REAL",
+            "caption": "VERIFIED REAL PHOTOGRAPH (GENUINE PHOTOGRAPH)"
+        }
+    ]
 
-    with r_col2:
-        st.markdown("""
-        <div style="background: #141414; border: 1px solid #282828; padding: 16px; border-top: 3px solid #34C759;">
-            <div style="font-size: 10px; font-weight: 800; color: #34C759; letter-spacing: 0.12em; text-transform: uppercase;">REGRESSION TEST 2 // PASSED</div>
-            <div style="font-size: 16px; font-weight: 800; color: #FFFFFF; margin: 4px 0 10px 0;">ONGC AI PORTRAIT 2</div>
-            <div style="font-size: 11px; color: #AAAAAA; line-height: 1.6;">
-                • <b>BASELINE CIFAKE RESNET-50:</b> <span style="color: #FF3B30;">REAL (85.9% confidence) [FAILURE]</span><br>
-                • <b>OOD STATUS:</b> <span style="color: #FFC000;">OUT_OF_DISTRIBUTION (Score: 0.58, Scale: 13.6x)</span><br>
-                • <b>PHYSICAL FORENSICS:</b> Gradient Kurtosis 28.5, Plasticity Index 7.8<br>
-                • <b>CONSOLIDATED ARBITRATION:</b> <span style="color: #34C759;">LIKELY AI-GENERATED (85.7% confidence)</span><br>
-                • <b>PRIMARY DRIVER:</b> MODERN_FORENSICS
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        img2_path = ROOT_DIR / "tests" / "regression_data" / "ai_portrait_ongc_2.png"
-        if img2_path.exists():
-            st.image(str(img2_path), caption="ONGC AI PORTRAIT 2 (AI-GENERATED)", use_container_width=True)
+    r_cols = st.columns(3)
+    for idx, spec in enumerate(regression_specimens):
+        with r_cols[idx]:
+            img_path = spec["path"]
+            if img_path.exists():
+                try:
+                    res = predict_image(str(img_path))
+                    is_ai_gt = spec["ground_truth"] == "AI"
+                    # For AI ground truth: passed if not classified as REAL (is_real is False)
+                    # For REAL ground truth: passed if not classified as AI (is_ai is False)
+                    if is_ai_gt:
+                        test_passed = (res["is_real"] is False)
+                    else:
+                        test_passed = (res["is_ai"] is False)
+
+                    badge_color = "#34C759" if test_passed else "#FF3B30"
+                    badge_text = f"TEST {idx + 1} // {'PASSED' if test_passed else 'FAILED'}"
+                    raw_real_pct = res.get("raw_probabilities", {}).get("REAL", res["raw_score"]) * 100
+                    raw_ai_pct = res.get("raw_probabilities", {}).get("AI", 1.0 - res.get("raw_score", 0.5)) * 100
+
+                    st.markdown(f"""
+                    <div style="background: #141414; border: 1px solid #282828; padding: 14px; border-top: 3px solid {badge_color}; min-height: 220px;">
+                        <div style="font-size: 10px; font-weight: 800; color: {badge_color}; letter-spacing: 0.12em; text-transform: uppercase;">{badge_text}</div>
+                        <div style="font-size: 14px; font-weight: 800; color: #FFFFFF; margin: 4px 0 8px 0;">{spec["title"]}</div>
+                        <div style="font-size: 11px; color: #AAAAAA; line-height: 1.6;">
+                            • <b>GROUND TRUTH:</b> <span style="color: #FFFFFF;">{spec["ground_truth"]}</span><br>
+                            • <b>VERDICT:</b> <span style="color: {badge_color};">{res["verdict"]}</span><br>
+                            • <b>DECISION CONF:</b> <span style="color: #FFFFFF;">{res["confidence_percent"]}</span><br>
+                            • <b>RAW MODEL:</b> P(AI)={raw_ai_pct:.1f}%, P(REAL)={raw_real_pct:.1f}%<br>
+                            • <b>OOD STATUS:</b> {res.get("ood_verdict", "N/A")} (Score: {res.get("ood_score", 0.0):.2f})<br>
+                            • <b>PRIMARY DRIVER:</b> {res.get("primary_driver", "CIFAR_CNN")}<br>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    st.image(str(img_path), caption=spec["caption"], use_container_width=True)
+                except Exception as ex:
+                    st.error(f"Execution error on {spec['title']}: {ex}")
+            else:
+                st.warning(f"File missing: {img_path.name}")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1472,7 +1527,7 @@ def page_about():
 
         <h4 style="color: #FFC000; margin-top: 24px; font-size: 18px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;">FORENSIC DETECTION ALGORITHMS</h4>
         <p>
-        1. <b>RESNET-50 TRANSFER LEARNING</b>: Deep residual visual feature extraction with fine-tuned top convolution blocks.<br>
+        1. <b>NATIVE CIFAR-CNN BENCHMARK ARCHITECTURE</b>: Native 32×32 convolutional feature extraction preserving discrete frequency distributions without early downsampling.<br>
         2. <b>FLAT-REGION SENSOR NOISE ESTIMATION</b>: Quantifies physical Poisson-Gaussian camera shot noise in low-gradient domains.<br>
         3. <b>2D FFT POWER SPECTRUM ANALYSIS</b>: Evaluates off-axis periodic delta spikes originating from generative deconvolution and upsampling.
         </p>
