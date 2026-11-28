@@ -106,3 +106,14 @@ def test_batch_predict_endpoint():
     assert len(data) == 2
     assert data[0]["label"] in ["REAL", "AI-GENERATED"]
     assert data[1]["label"] in ["REAL", "AI-GENERATED"]
+
+
+def test_generalization_metrics_endpoint():
+    response = client.get("/generalization-metrics")
+    assert response.status_code == 200
+    data = response.json()
+    assert "categories" in data
+    assert "category_a" in data["categories"]
+    assert "category_b" in data["categories"]
+    assert "regression_status" in data
+    assert data["status"] == "VALIDATED"

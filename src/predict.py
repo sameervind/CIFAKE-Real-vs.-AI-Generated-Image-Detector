@@ -1,12 +1,19 @@
 """
 Inference module for CIFAKE AI vs. Real image prediction.
-Uses trained ResNet50 Transfer Learning model as the primary, authoritative classifier.
-Includes independent 2D Fourier and spatial frequency diagnostics as supplementary signals.
-Strictly eliminates silent fallback behavior.
+
+Integrates:
+1. ResNet50 Transfer Learning Model (Deep residual benchmark classifier).
+2. Out-of-Distribution (OOD) & Uncertainty Engine (Manifold distance & scale shift).
+3. Modern Multi-Scale Forensic Analyzer (PRNU noise, kurtosis, plasticity, TCA).
+4. Independent 2D Fourier & spatial frequency diagnostics.
+5. Transparent Multi-Evidence Decision Arbiter.
+
+Strictly eliminates silent fallback behavior and overconfident false predictions.
 """
 
 import sys
 import os
+sys.path.insert(0, os.path.abspath("."))
 import time
 import argparse
 from pathlib import Path
@@ -23,6 +30,9 @@ from src.model import (
     DEFAULT_MODEL_PATH
 )
 from src.frequency_analysis import extract_artifact_features
+from src.ood_detector import get_ood_detector
+from src.forensics import get_forensic_analyzer
+from src.decision_engine import get_decision_engine
 
 
 def predict_image(
@@ -32,7 +42,8 @@ def predict_image(
     compute_diagnostics: bool = True
 ) -> Dict[str, Any]:
     """
-    Predict whether an image is AI-generated (Synthetic) or a Real Photograph using ResNet50.
+    Predict whether an image is AI-generated (Synthetic) or a Real Photograph
+    using the synthesized ResNet50 and Multi-Scale Forensic Decision Engine.
     
     Args:
         image_input: File path (str/Path), PIL Image, or numpy array.
@@ -42,7 +53,7 @@ def predict_image(
         
     Returns:
         Dictionary containing authoritative prediction, confidence, probabilities,
-        active backend, and supplementary spectral diagnostics.
+        active backend, OOD telemetry, forensic metrics, and transparent decision rationale.
         
     Raises:
         ModelUnavailableError: If trained ResNet50 checkpoint is missing or invalid.
@@ -50,7 +61,7 @@ def predict_image(
     """
     start_time = time.perf_counter()
 
-    # Load raw RGB image
+    # Load raw RGB image at native resolution
     if isinstance(image_input, (str, Path)):
         img_path = Path(image_input)
         if not img_path.exists():
@@ -76,16 +87,24 @@ def predict_image(
         else:
             raw_rgb = raw_rgb.astype(np.uint8)
 
-    # 1. Authoritative ResNet50 Inference
+    # 1. Authoritative ResNet50 Inference (on 224x224 preprocessed manifold)
     service = get_inference_service(model_path=model_path)
     pred_res = service.predict(raw_rgb, threshold=threshold)
+    feature_emb = pred_res.get("feature_embedding")
 
-    is_real = pred_res["is_real"]
-    real_prob = pred_res["probabilities"]["REAL"]
-    ai_prob = pred_res["probabilities"]["AI"]
-    confidence = pred_res["confidence"]
+    # 2. Out-of-Distribution & Uncertainty Evaluation
+    ood_detector = get_ood_detector()
+    ood_res = ood_detector.evaluate(
+        raw_rgb,
+        feature_embedding=feature_emb,
+        raw_score=pred_res["raw_score"]
+    )
 
-    # 2. Supplementary Spectral Diagnostics (Non-blocking, clearly marked as supplementary)
+    # 3. Modern Multi-Scale Forensic Analysis (on native un-downsampled image)
+    forensic_analyzer = get_forensic_analyzer()
+    forensic_res = forensic_analyzer.analyze(raw_rgb)
+
+    # 4. Supplementary Spectral Diagnostics
     artifact_metrics = {}
     spectrum_2d = np.zeros((32, 32), dtype=np.float32)
     radial_profile = []
@@ -98,41 +117,44 @@ def predict_image(
         except Exception as e:
             artifact_metrics = {"error": f"Diagnostic extraction failed: {e}"}
 
+    # 5. Transparent Multi-Evidence Arbitration
+    decision_engine = get_decision_engine()
+    decision = decision_engine.arbitrate(
+        cifake_res=pred_res,
+        ood_res=ood_res,
+        forensic_res=forensic_res,
+        spectral_metrics=artifact_metrics
+    )
+
     elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
 
-    # Formulate forensic explanation
-    if is_real:
-        explanation = (
-            f"ResNet-50 deep residual manifold matches photographic distribution (P(REAL)={real_prob * 100:.1f}%). "
-            f"Physical sensor noise std={artifact_metrics.get('noise_residual_std', 'N/A')} with natural gradient distribution."
-        )
-    else:
-        explanation = (
-            f"ResNet-50 deep residual manifold matches synthetic generative distribution (P(AI)={ai_prob * 100:.1f}%). "
-            f"Spectral peak ratio={artifact_metrics.get('spectral_peak_ratio', 'N/A')}x with characteristic diffusion feature residue."
-        )
-
     return {
-        "label": pred_res["label"],
-        "class_id": pred_res["class_id"],
-        "is_real": is_real,
-        "is_ai": not is_real,
-        "confidence": confidence,
-        "confidence_percent": f"{confidence * 100:.1f}%",
-        "probabilities": {
-            "REAL": real_prob,
-            "AI": ai_prob
-        },
+        "label": decision.label,
+        "verdict": decision.verdict,
+        "class_id": decision.class_id,
+        "is_real": decision.is_real,
+        "is_ai": decision.is_ai,
+        "is_inconclusive": decision.is_inconclusive,
+        "confidence": decision.confidence,
+        "confidence_percent": decision.confidence_percent,
+        "primary_driver": decision.primary_driver,
+        "probabilities": decision.probabilities,
         "raw_score": pred_res["raw_score"],
         "threshold": threshold,
         "backend": pred_res["backend"],
         "model_name": pred_res["model_name"],
         "model_version": Path(pred_res["checkpoint_path"]).name,
         "checkpoint_path": pred_res["checkpoint_path"],
+        "is_ood": ood_res.is_ood,
+        "ood_score": ood_res.ood_score,
+        "ood_verdict": ood_res.verdict,
+        "ood_telemetry": decision.ood_telemetry,
+        "forensic_telemetry": decision.forensic_telemetry,
+        "cifake_telemetry": decision.cifake_telemetry,
         "artifacts": artifact_metrics,
         "spectrum_2d": spectrum_2d,
         "radial_profile": radial_profile,
-        "explanation": explanation,
+        "explanation": decision.synthesis_rationale,
         "processing_time_ms": elapsed_ms
     }
 
@@ -150,21 +172,25 @@ def main():
 
     try:
         result = predict_image(args.image_path, model_path=args.model, threshold=args.threshold)
-        print("=" * 65)
-        print(f" Image:       {args.image_path}")
-        print(f" Prediction:  {result['label']} ({result['confidence_percent']} confidence)")
-        print(f" P(Real):     {result['probabilities']['REAL']:.4f}")
-        print(f" P(AI):       {result['probabilities']['AI']:.4f}")
-        print(f" Backend:     {result['backend']} ({result['model_name']} - {result['model_version']})")
-        print(f" Latency:     {result['processing_time_ms']} ms")
-        print(f" Diagnostic:  {result['explanation']}")
-        print("=" * 65)
+        print("\n================ CIFAKE PREDICTION RESULT ================")
+        print(f"Verdict:             {result['verdict']}")
+        print(f"Label:               {result['label']}")
+        print(f"Confidence:          {result['confidence_percent']}")
+        print(f"Decision Driver:     {result['primary_driver']}")
+        print(f"P(REAL):             {result['probabilities']['REAL'] * 100:.2f}%")
+        print(f"P(AI):               {result['probabilities']['AI'] * 100:.2f}%")
+        print(f"OOD Status:          {result['ood_verdict']} (score: {result['ood_score']:.2f})")
+        print(f"Backend:             {result['backend']}")
+        print(f"Latency:             {result['processing_time_ms']} ms")
+        print("----------------------------------------------------------")
+        print(f"Rationale: {result['explanation']}")
+        print("==========================================================\n")
     except ModelUnavailableError as e:
-        print(f"\n[MODEL ERROR] {e}", file=sys.stderr)
+        print(f"\n[ERROR] Model unavailable: {e}", file=sys.stderr)
         sys.exit(2)
     except Exception as e:
-        print(f"\n[INFERENCE ERROR] {e}", file=sys.stderr)
-        sys.exit(1)
+        print(f"\n[ERROR] Inference failed: {e}", file=sys.stderr)
+        sys.exit(3)
 
 
 if __name__ == "__main__":

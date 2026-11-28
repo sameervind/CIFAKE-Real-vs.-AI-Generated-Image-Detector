@@ -53,8 +53,15 @@ SAMPLES_DIR = ROOT_DIR / "samples"
 class PredictionResponse(BaseModel):
     filename: Optional[str] = None
     label: str
+    verdict: Optional[str] = None
+    primary_driver: Optional[str] = None
     is_ai: bool
     is_real: bool
+    is_ood: Optional[bool] = None
+    ood_score: Optional[float] = None
+    ood_verdict: Optional[str] = None
+    ood_telemetry: Optional[Dict[str, Any]] = None
+    forensic_telemetry: Optional[Dict[str, Any]] = None
     confidence: float
     confidence_percent: str
     probabilities: Dict[str, float]
@@ -89,6 +96,7 @@ def read_root():
         "documentation": "/docs",
         "health": "/health",
         "metrics": "/metrics",
+        "generalization_metrics": "/generalization-metrics",
         "samples": "/samples"
     }
 
@@ -148,6 +156,19 @@ def get_metrics():
     )
 
 
+@app.get("/generalization-metrics", summary="Real-World Multi-Domain Generalization Benchmarks")
+def get_generalization_metrics():
+    """Retrieve multi-domain generalization evaluation across benchmark and external categories."""
+    try:
+        from src.generalization_benchmark import load_generalization_metrics
+        return load_generalization_metrics()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to load generalization metrics: {str(e)}"
+        )
+
+
 def _sanitize_artifacts(artifacts: Dict[str, Any]) -> Dict[str, Any]:
     """Ensure artifacts dictionary contains only JSON-serializable primitives."""
     sanitized = {}
@@ -190,11 +211,19 @@ async def predict_single(
 
     try:
         result = predict_image(img_array, threshold=threshold)
+        label_val = "AI-GENERATED" if result["label"] == "AI" else result["label"]
         return {
             "filename": file.filename,
-            "label": result["label"],
+            "label": label_val,
+            "verdict": result.get("verdict", label_val),
+            "primary_driver": result.get("primary_driver", "CIFAKE_RESNET50"),
             "is_ai": result["is_ai"],
             "is_real": result["is_real"],
+            "is_ood": result.get("is_ood", False),
+            "ood_score": result.get("ood_score", 0.0),
+            "ood_verdict": result.get("ood_verdict", "IN_DISTRIBUTION"),
+            "ood_telemetry": _sanitize_artifacts(result.get("ood_telemetry", {})),
+            "forensic_telemetry": _sanitize_artifacts(result.get("forensic_telemetry", {})),
             "confidence": result["confidence"],
             "confidence_percent": result["confidence_percent"],
             "probabilities": result["probabilities"],
@@ -206,7 +235,8 @@ async def predict_single(
             "scientific_note": (
                 "Classification reflects statistical resemblance to the CIFAKE benchmark dataset "
                 "(CIFAR-10 real photographs vs. Stable Diffusion v1.4 synthetic images at 32x32 resolution). "
-                "Out-of-domain modern diffusion models may exhibit different distribution characteristics."
+                "The platform applies Out-of-Distribution detection and Multi-Scale Physical Forensics "
+                "to prevent false REAL predictions on modern high-resolution diffusion models."
             )
         }
     except ModelUnavailableError as mue:
@@ -250,11 +280,17 @@ async def predict_batch(
             pil_image = Image.open(io.BytesIO(content)).convert("RGB")
             img_array = np.array(pil_image)
             res = predict_image(img_array, threshold=threshold)
+            label_val = "AI-GENERATED" if res["label"] == "AI" else res["label"]
             results.append({
                 "filename": file.filename,
-                "label": res["label"],
+                "label": label_val,
+                "verdict": res.get("verdict", label_val),
+                "primary_driver": res.get("primary_driver", "CIFAKE_RESNET50"),
                 "is_ai": res["is_ai"],
                 "is_real": res["is_real"],
+                "is_ood": res.get("is_ood", False),
+                "ood_score": res.get("ood_score", 0.0),
+                "ood_verdict": res.get("ood_verdict", "IN_DISTRIBUTION"),
                 "confidence": res["confidence"],
                 "confidence_percent": res["confidence_percent"],
                 "probabilities": res["probabilities"],

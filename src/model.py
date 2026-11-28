@@ -200,6 +200,14 @@ class ResNet50InferenceService:
 
         try:
             self.model = tf.keras.models.load_model(str(resolved))
+            try:
+                dense_layer = self.model.get_layer("dense_feature")
+                self.feature_extractor = tf.keras.Model(
+                    inputs=self.model.input,
+                    outputs=[dense_layer.output, self.model.get_layer("output_real").output]
+                )
+            except Exception:
+                self.feature_extractor = None
             print(f"[ResNet50Service] Loaded trained checkpoint from: {resolved}")
         except Exception as e:
             raise ModelUnavailableError(
@@ -239,10 +247,19 @@ class ResNet50InferenceService:
         preprocessed = preprocess_image(image_input, target_size=TARGET_SIZE, apply_imagenet_norm=True)
         batch = np.expand_dims(preprocessed, axis=0)
 
-        # Raw sigmoid output: P(REAL)
-        # Using __call__ for fast eager inference instead of model.predict overhead
-        pred_tensor = self.model(batch, training=False)
-        raw_pred = float(pred_tensor.numpy()[0][0])
+        # Raw sigmoid output: P(REAL) and 128-dim dense manifold embedding
+        feature_emb = None
+        if getattr(self, "feature_extractor", None) is not None:
+            try:
+                feat_t, pred_t = self.feature_extractor(batch, training=False)
+                raw_pred = float(pred_t.numpy()[0][0])
+                feature_emb = feat_t.numpy()[0]
+            except Exception:
+                pred_tensor = self.model(batch, training=False)
+                raw_pred = float(pred_tensor.numpy()[0][0])
+        else:
+            pred_tensor = self.model(batch, training=False)
+            raw_pred = float(pred_tensor.numpy()[0][0])
         
         # Clip to avoid division by zero or extreme rounding issues while preserving genuine probabilities
         real_prob = float(np.clip(raw_pred, 0.0001, 0.9999))
@@ -268,7 +285,8 @@ class ResNet50InferenceService:
             "threshold": threshold,
             "backend": "tensorflow_keras",
             "model_name": "ResNet50",
-            "checkpoint_path": self.model_path
+            "checkpoint_path": self.model_path,
+            "feature_embedding": feature_emb
         }
 
 
